@@ -1,0 +1,17 @@
+{{define "content"}}
+<h1 style="font-family: sans-serif; margin-top: 0;">
+    Goodbye {{ .Data.Displayname }},
+</h1>
+
+<p style="font-family: sans-serif;">
+    Your account has been deleted for the following reason:
+</p>
+
+<p style="font-family: sans-serif; padding: 12px 0; border: 1px solid black; text-align: center;">
+    {{ .Data.Reason }}
+</p>
+
+<p style="font-family: sans-serif; color: #808080; text-align: center;">
+    This action is <b>final</b> and cannot be undone.
+</p>
+{{end}}

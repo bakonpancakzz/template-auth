@@ -1,0 +1,33 @@
+{{define "content"}}
+<h1 style="font-family: sans-serif; margin-top: 0;">
+    Hello {{ .Data.Displayname }},
+</h1>
+
+<p style="font-family: sans-serif;">
+    A new device has logged into your account, you may review it below:
+</p>
+
+<table style="width: 100%; padding: 16px; border: 1px solid black">
+    <tr>
+        <td style="font-family: sans-serif; text-align: center;"><b>Time:</b></td>
+        <td style="font-family: sans-serif; text-align: center;">{{ .Data.Timestamp }}</td>
+    </tr>
+    <tr>
+        <td style="font-family: sans-serif; text-align: center;"><b>IP Address:</b></td>
+        <td style="font-family: sans-serif; text-align: center;">{{ .Data.IpAddress }}</td>
+    </tr>
+    <tr>
+        <td style="font-family: sans-serif; text-align: center;"><b>Location:</b></td>
+        <td style="font-family: sans-serif; text-align: center;">{{ .Data.DeviceLocation }}</td>
+    </tr>
+    <tr>
+        <td style="font-family: sans-serif; text-align: center;"><b>Device:</b></td>
+        <td style="font-family: sans-serif; text-align: center;">{{ .Data.DeviceBrowser }}</td>
+    </tr>
+</table>
+
+<p style="font-family: sans-serif; color: #808080; text-align: center;">
+    If this wasn't you, please act quickly and
+    <a href="{{ .Host }}/password-reset" style="font-family: sans-serif; color: #808080;">Reset your Password</a>.
+</p>
+{{end}}

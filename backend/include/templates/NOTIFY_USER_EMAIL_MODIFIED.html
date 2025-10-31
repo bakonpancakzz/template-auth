@@ -1,0 +1,14 @@
+{{define "content"}}
+<h1 style="font-family: sans-serif; margin-top: 0;">
+    Hello {{ .Data.Displayname }},
+</h1>
+
+<p style="font-family: sans-serif;">
+    Your account email address has been updated per your request.
+</p>
+
+<p style="font-family: sans-serif; color: #808080;">
+    If this wasn't you, please act quickly and
+    <a href="{{ .Host }}/password-reset" style="font-family: sans-serif; color: #808080;">Reset your Password</a>.
+</p>
+{{end}}

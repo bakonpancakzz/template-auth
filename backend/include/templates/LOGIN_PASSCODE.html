@@ -1,0 +1,21 @@
+{{define "content"}}
+<h1 style="font-family: sans-serif; margin-top: 0;">
+    Hello {{ .Data.Displayname }},
+</h1>
+
+<p style="font-family: sans-serif;">
+    Use this code to make changes to your account.
+</p>
+
+<p style="font-family: sans-serif; padding: 12px 0; border: 1px solid black; text-align: center;">
+    {{ .Data.Code }}
+</p>
+
+<p style="font-family: sans-serif; color: #808080; text-align: center;">
+    if this wasn't you feel free to ignore or discard this email.
+</p>
+
+<p style="font-family: sans-serif; color: #808080; font-size: small; text-align: center;">
+    This code will expire in {{ .Data.Lifetime }} minutes.
+</p>
+{{end}}
