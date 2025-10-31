@@ -19,7 +19,7 @@ func DELETE_Users_Me_Security_Sessions_ID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	snowflake, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+	snowflake, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_SESSION)
 		return

@@ -17,12 +17,12 @@ import (
 const SESSION_NO_APPLICATION_ID = 0
 
 type SessionData struct {
-	UserID           int  // Relevant User ID
-	SessionID        int  // Relevant Session ID
-	ConnectionID     int  // Relevant Connection ID
-	ConnectionScopes int  // Relevant Connection Scopes (APP_USER for User)
-	ApplicationID    int  // Relevant Application ID (APP_USER for User)
-	Elevated         bool // Relevant Session Elevated?
+	UserID           int64 // Relevant User ID
+	SessionID        int64 // Relevant Session ID
+	ConnectionID     int64 // Relevant Connection ID
+	ConnectionScopes int   // Relevant Connection Scopes (APP_USER for User)
+	ApplicationID    int64 // Relevant Application ID (APP_USER for User)
+	Elevated         bool  // Relevant Session Elevated?
 }
 
 type RatelimitOptions struct {
