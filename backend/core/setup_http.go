@@ -10,10 +10,7 @@ import (
 	"github.com/bakonpancakzz/template-auth/tools"
 )
 
-var httpLogger tools.LoggerInstance
-
 func SetupHTTP(stop context.Context, await *sync.WaitGroup) {
-	httpLogger = tools.Logger.New("http")
 
 	// Optimized to prevent malicious attacks but shouldn't
 	// really bother devices on slower networks :)
@@ -34,7 +31,7 @@ func SetupHTTP(stop context.Context, await *sync.WaitGroup) {
 			tools.HTTP_TLS_CA,
 		)
 		if err != nil {
-			httpLogger.Fatal("Failed to configure TLS", err)
+			tools.LoggerHttp.Fatal("Failed to configure TLS", err)
 			return
 		}
 		svr.TLSConfig = tls
@@ -46,19 +43,19 @@ func SetupHTTP(stop context.Context, await *sync.WaitGroup) {
 		defer await.Done()
 		<-stop.Done()
 		svr.Shutdown(context.Background())
-		httpLogger.Info("Closed", nil)
+		tools.LoggerHttp.Info("Closed", nil)
 	}()
 
 	// Server Startup
 	var err error
-	httpLogger.Info("Ready", map[string]any{"address": svr.Addr})
+	tools.LoggerHttp.Info("Ready", map[string]any{"address": svr.Addr})
 	if tools.HTTP_TLS_ENABLED {
 		err = svr.ListenAndServeTLS("", "")
 	} else {
 		err = svr.ListenAndServe()
 	}
 	if err != http.ErrServerClosed {
-		httpLogger.Fatal("Startup Failed", err)
+		tools.LoggerHttp.Fatal("Startup Failed", err)
 	}
 }
 
@@ -88,26 +85,26 @@ func SetupMux() *http.ServeMux {
 			Period: 5 * time.Minute,
 			Limit:  3,
 		})
-		// rateServerWrite = tools.NewRatelimit(&tools.RatelimitOptions{
-		// 	Bucket: "RATE_SERVER_WRITE",
-		// 	Period: time.Minute,
-		// 	Limit:  1000,
-		// })
+		rateServerWrite = tools.NewRatelimit(&tools.RatelimitOptions{
+			Bucket: "RATE_SERVER_WRITE",
+			Period: time.Minute,
+			Limit:  1000,
+		})
 	)
 
-	// // Login Routes
+	// Login Routes
 	mux.Handle("/auth/login", tools.MethodHandler{
-		// http.MethodPost: tools.Chain(routes.POST_Auth_Login, rateLogin, limitJSON),
+		http.MethodPost: tools.Chain(routes.POST_Auth_Login, rateLogin, limitJSON),
 	})
 	mux.Handle("/auth/signup", tools.MethodHandler{
-		// http.MethodPost: tools.Chain(routes.POST_Auth_Signup, rateLogin, limitJSON),
+		http.MethodPost: tools.Chain(routes.POST_Auth_Signup, rateLogin, limitJSON),
 	})
 	mux.Handle("/auth/logout", tools.MethodHandler{
 		http.MethodPost: tools.Chain(routes.POST_Auth_Logout, rateLogin, session),
 	})
 	mux.Handle("/auth/password-reset", tools.MethodHandler{
-		http.MethodPost: tools.Chain(routes.POST_Auth_ResetPassword, rateLogin, limitJSON),
-		// http.MethodPatch: tools.Chain(routes.PATCH_Auth_ResetPassword, rateLogin, limitJSON),
+		http.MethodPost:  tools.Chain(routes.POST_Auth_ResetPassword, rateLogin, limitJSON),
+		http.MethodPatch: tools.Chain(routes.PATCH_Auth_ResetPassword, rateLogin, limitJSON),
 	})
 	mux.Handle("/auth/verify-login", tools.MethodHandler{
 		http.MethodPost: tools.Chain(routes.POST_Auth_VerifyLogin, rateLogin),
@@ -118,14 +115,14 @@ func SetupMux() *http.ServeMux {
 
 	// oAuth2
 	mux.Handle("/oauth2/authorize", tools.MethodHandler{
-		// http.MethodGet:  tools.Chain(routes.GET_OAuth2_Authorize, rateClientRead, session),
-		// http.MethodPost: tools.Chain(routes.POST_OAuth2_Authorize, rateClientWrite, session),
+		http.MethodGet:  tools.Chain(routes.GET_OAuth2_Authorize, rateClientRead, session),
+		http.MethodPost: tools.Chain(routes.POST_OAuth2_Authorize, rateClientWrite, session),
 	})
 	mux.Handle("/oauth2/token", tools.MethodHandler{
-		// http.MethodPost: tools.Chain(routes.POST_OAuth2_Token, rateServerWrite),
+		http.MethodPost: tools.Chain(routes.POST_OAuth2_Token, rateServerWrite),
 	})
 	mux.Handle("/oauth2/token/revoke", tools.MethodHandler{
-		// http.MethodPost: tools.Chain(routes.POST_OAuth2_Token_Revoke, rateServerWrite),
+		http.MethodPost: tools.Chain(routes.POST_OAuth2_Token_Revoke, rateServerWrite),
 	})
 
 	// User
@@ -133,31 +130,31 @@ func SetupMux() *http.ServeMux {
 		http.MethodGet: tools.Chain(routes.GET_Users_ID, rateClientRead),
 	})
 	mux.Handle("/users/@me", tools.MethodHandler{
-		http.MethodGet: tools.Chain(routes.GET_Users_Me, rateClientRead, session),
-		// http.MethodPatch:  tools.Chain(routes.PATCH_Users_Me, rateClientWrite, session, limitJSON),
+		http.MethodGet:    tools.Chain(routes.GET_Users_Me, rateClientRead, session),
+		http.MethodPatch:  tools.Chain(routes.PATCH_Users_Me, rateClientWrite, session, limitJSON),
 		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me, rateClientWrite, session),
 	})
 	mux.Handle("/users/@me/avatar", tools.MethodHandler{
-		// http.MethodPut:    tools.Chain(nil, rateClientImage, session, limitFile), // TODO: Implement endpoint
-		// http.MethodDelete: tools.Chain(nil, rateClientWrite, session),            // TODO: Implement endpoint
+		http.MethodPut:    tools.Chain(routes.PUT_Users_Me_Avatar, rateClientImage, session, limitFile),
+		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me_Avatar, rateClientWrite, session),
 	})
 	mux.Handle("/users/@me/banner", tools.MethodHandler{
-		// http.MethodPut:    tools.Chain(nil, rateClientImage, session, limitFile), // TODO: Implement endpoint
-		// http.MethodDelete: tools.Chain(nil, rateClientWrite, session),            // TODO: Implement endpoint
+		http.MethodPut:    tools.Chain(routes.PUT_Users_Me_Banner, rateClientImage, session, limitFile),
+		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me_Banner, rateClientWrite, session),
 	})
 
 	// User Applications
 	mux.Handle("/users/@me/applications", tools.MethodHandler{
-		http.MethodGet: tools.Chain(routes.GET_Users_Me_Applications, rateClientRead, session),
-		// http.MethodPost: tools.Chain(routes.POST_Users_Me_Applications, rateClientWrite, session),
+		http.MethodGet:  tools.Chain(routes.GET_Users_Me_Applications, rateClientRead, session),
+		http.MethodPost: tools.Chain(routes.POST_Users_Me_Applications, rateClientWrite, session),
 	})
 	mux.Handle("/users/@me/applications/{id}", tools.MethodHandler{
-		// http.MethodPatch:  tools.Chain(routes.PATCH_Users_Me_Applications_ID, rateClientWrite, session, limitJSON),
+		http.MethodPatch:  tools.Chain(routes.PATCH_Users_Me_Applications_ID, rateClientWrite, session, limitJSON),
 		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me_Applications_ID, rateClientWrite, session),
 	})
 	mux.Handle("/users/@me/applications/{id}/icon", tools.MethodHandler{
-		http.MethodPut:    tools.Chain(nil, rateClientImage, session, limitFile), // TODO: Implement endpoint
-		http.MethodDelete: tools.Chain(nil, rateClientWrite, session),            // TODO: Implement endpoint
+		http.MethodPut:    tools.Chain(routes.PUT_Users_Me_Applications_ID_Icon, rateClientImage, session, limitFile),
+		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me_Applications_ID_Icon, rateClientWrite, session),
 	})
 	mux.Handle("/users/@me/applications/{id}/reset", tools.MethodHandler{
 		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me_Applications_ID_Reset, rateClientWrite, session),
@@ -165,7 +162,7 @@ func SetupMux() *http.ServeMux {
 
 	// User Application Connections
 	mux.Handle("/users/@me/connections", tools.MethodHandler{
-		// http.MethodGet: tools.Chain(routes.GET_Users_Me_Connections, rateClientRead, session),
+		http.MethodGet: tools.Chain(routes.GET_Users_Me_Connections, rateClientRead, session),
 	})
 	mux.Handle("/users/@me/connections/{id}", tools.MethodHandler{
 		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me_Connections_ID, rateClientWrite, session),
@@ -179,7 +176,7 @@ func SetupMux() *http.ServeMux {
 		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me_Security_Sessions_ID, rateClientWrite, session),
 	})
 	mux.Handle("/users/@me/security/escalate", tools.MethodHandler{
-		// http.MethodPost: tools.Chain(routes.POST_Users_Me_Security_Escalate, rateClientWrite, session, limitJSON),
+		http.MethodPost: tools.Chain(routes.POST_Users_Me_Security_Escalate, rateClientWrite, session, limitJSON),
 	})
 	mux.Handle("/users/@me/security/mfa/setup", tools.MethodHandler{
 		http.MethodGet:    tools.Chain(routes.GET_Users_Me_Security_MFA_Setup, rateClientWrite, session),
@@ -191,11 +188,11 @@ func SetupMux() *http.ServeMux {
 		http.MethodDelete: tools.Chain(routes.DELETE_Users_Me_Security_MFA_Codes, rateClientWrite, session),
 	})
 	mux.Handle("/users/@me/security/password", tools.MethodHandler{
-		// http.MethodPatch: tools.Chain(routes.PATCH_Users_Me_Security_Password, rateClientWrite, session, limitJSON),
+		http.MethodPatch: tools.Chain(routes.PATCH_Users_Me_Security_Password, rateClientWrite, session, limitJSON),
 	})
 	mux.Handle("/users/@me/security/email", tools.MethodHandler{
-		// http.MethodPost:  tools.Chain(routes.POST_Users_Me_Security_Email, rateClientWrite, session),
-		// http.MethodPatch: tools.Chain(routes.PATCH_Users_Me_Security_Email, rateClientWrite, session, limitJSON),
+		http.MethodPost:  tools.Chain(routes.POST_Users_Me_Security_Email, rateClientWrite, session),
+		http.MethodPatch: tools.Chain(routes.PATCH_Users_Me_Security_Email, rateClientWrite, session, limitJSON),
 	})
 
 	// Default 404 Handler
