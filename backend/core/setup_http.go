@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bakonpancakzz/template-auth/routes"
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/routes"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func SetupHTTP(stop context.Context, await *sync.WaitGroup) {

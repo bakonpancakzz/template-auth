@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func DELETE_Users_Me_Security_Sessions_ID(w http.ResponseWriter, r *http.Request) {

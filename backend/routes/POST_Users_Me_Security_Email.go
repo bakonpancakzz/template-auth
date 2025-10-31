@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/tools"
 
 	"github.com/jackc/pgx/v5"
 )

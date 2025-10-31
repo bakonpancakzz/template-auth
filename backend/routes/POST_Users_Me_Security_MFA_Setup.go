@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func POST_Users_Me_Security_MFA_Setup(w http.ResponseWriter, r *http.Request) {

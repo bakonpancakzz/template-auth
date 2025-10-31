@@ -1,4 +1,4 @@
-module github.com/bakonpancakzz/template-auth
+module github.com/bakonpancakz/template-auth
 
 go 1.25.2
 

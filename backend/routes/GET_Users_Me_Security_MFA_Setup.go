@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func GET_Users_Me_Security_MFA_Setup(w http.ResponseWriter, r *http.Request) {

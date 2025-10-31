@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func POST_Users_Me_Applications(w http.ResponseWriter, r *http.Request) {

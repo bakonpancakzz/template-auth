@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func DELETE_Users_Me_Security_MFA_Codes(w http.ResponseWriter, r *http.Request) {

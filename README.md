@@ -5,7 +5,7 @@ Designed to act as a **central login server**, with smaller services authenticat
 through the built-in **OAuth2 framework**.
 
 ## 🌟 Features
-- PostgreSQL database schema ([view here](https://github.com/bakonpancakzz/template-auth/blob/main/backend/include/schema.sql))
+- PostgreSQL database schema ([view here](https://github.com/bakonpancakz/template-auth/blob/main/backend/include/schema.sql))
 - Secure user authentication with **TOTP**, **email**, and **passwords**
 - Custom user profiles (avatar, banner, accent color, etc.)
 - Custom user applications with **OAuth2** support
@@ -24,7 +24,7 @@ through the built-in **OAuth2 framework**.
 - Static site for account management
 
 > 🔰 Quickly set up a preview instance using **Docker Compose**!  
-> Guide available in the [`preview`](https://github.com/bakonpancakzz/template-auth/blob/main/preview) directory.
+> Guide available in the [`preview`](https://github.com/bakonpancakz/template-auth/blob/main/preview) directory.
 
 ## 📷 Showcase
 

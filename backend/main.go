@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bakonpancakzz/template-auth/core"
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/core"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func main() {

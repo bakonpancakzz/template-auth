@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func POST_Auth_Signup(w http.ResponseWriter, r *http.Request) {

@@ -5,8 +5,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/bakonpancakzz/template-auth/include"
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/include"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 func DebugDatabaseApplySchema() {

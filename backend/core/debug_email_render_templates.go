@@ -7,8 +7,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/bakonpancakzz/template-auth/include"
-	"github.com/bakonpancakzz/template-auth/tools"
+	"github.com/bakonpancakz/template-auth/include"
+	"github.com/bakonpancakz/template-auth/tools"
 )
 
 // Renders all Email Templates and then immediately exits

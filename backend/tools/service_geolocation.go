@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bakonpancakzz/template-auth/include"
+	"github.com/bakonpancakz/template-auth/include"
 )
 
 type IPV4Entry struct {
