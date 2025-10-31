@@ -9,10 +9,8 @@ import (
 )
 
 var Database *pgxpool.Pool
-var DatabaseLogger LoggerInstance
 
 func SetupDatabase(stop context.Context, await *sync.WaitGroup) {
-	DatabaseLogger = Logger.New("database")
 	t := time.Now()
 
 	// Setup Connection Pool
@@ -21,10 +19,10 @@ func SetupDatabase(stop context.Context, await *sync.WaitGroup) {
 	var err error
 
 	if Database, err = pgxpool.New(ctx, DATABASE_URL); err != nil {
-		DatabaseLogger.Fatal("Failed to create pool", err)
+		LoggerDatabase.Fatal("Failed to create pool", err)
 	}
 	if err = Database.Ping(ctx); err != nil {
-		DatabaseLogger.Fatal("Failed to ping database", err)
+		LoggerDatabase.Fatal("Failed to ping database", err)
 	}
 
 	// Shutdown Logic
@@ -33,9 +31,9 @@ func SetupDatabase(stop context.Context, await *sync.WaitGroup) {
 		defer await.Done()
 		<-stop.Done()
 		Database.Close()
-		DatabaseLogger.Info("Closed", nil)
+		LoggerDatabase.Info("Closed", nil)
 	}()
-	DatabaseLogger.Info("Ready", map[string]any{
+	LoggerDatabase.Info("Ready", map[string]any{
 		"time": time.Since(t).String(),
 	})
 }

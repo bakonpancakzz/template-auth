@@ -12,8 +12,6 @@ type contextKey string
 
 var SESSION_KEY contextKey = "gloopert"
 
-var httpLogger LoggerInstance
-
 // Cancel Request and Respond with an API Error
 func SendClientError(w http.ResponseWriter, r *http.Request, e APIError) {
 	w.WriteHeader(e.Status)
@@ -23,7 +21,7 @@ func SendClientError(w http.ResponseWriter, r *http.Request, e APIError) {
 
 // Cancel Request and Respond with a Generic Server Error
 func SendServerError(w http.ResponseWriter, r *http.Request, err error) {
-	httpLogger.Error("Uncaught Error", map[string]any{
+	LoggerHttp.Error(err.Error(), map[string]any{
 		"url":     r.URL.String(),
 		"headers": r.Header,
 		"session": r.Context().Value(SESSION_KEY),

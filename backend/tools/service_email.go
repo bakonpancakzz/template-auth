@@ -66,10 +66,8 @@ type EmailProvider interface {
 }
 
 var Email EmailProvider
-var EmailLogger LoggerInstance
 
 func SetupEmailProvider(stop context.Context, await *sync.WaitGroup) {
-	EmailLogger = Logger.New("email")
 	t := time.Now()
 
 	switch EMAIL_PROVIDER {
@@ -80,13 +78,13 @@ func SetupEmailProvider(stop context.Context, await *sync.WaitGroup) {
 	case "none":
 		Email = &emailProviderNone{}
 	default:
-		EmailLogger.Fatal("Unknown Provider", EMAIL_PROVIDER)
+		LoggerEmail.Fatal("Unknown Provider", EMAIL_PROVIDER)
 	}
 
 	if err := Email.Start(stop, await); err != nil {
-		EmailLogger.Fatal("Startup Failed", err)
+		LoggerEmail.Fatal("Startup Failed", err)
 	}
-	EmailLogger.Info("Ready", map[string]any{
+	LoggerEmail.Info("Ready", map[string]any{
 		"time": time.Since(t).String(),
 	})
 }
@@ -108,12 +106,11 @@ func SetupEmailTemplate[L any](filename, subjectLine string) func(emailAddress s
 
 		// Render Email
 		var buffer bytes.Buffer
-		err := template.Execute(&buffer, map[string]any{
+		if err := template.Execute(&buffer, map[string]any{
 			"Host": EMAIL_DEFAULT_HOST,
 			"Data": locals,
-		})
-		if err != nil {
-			EmailLogger.Error("Render Failed", map[string]any{
+		}); err != nil {
+			LoggerEmail.Error("Render Failed", map[string]any{
 				"address":  emailAddress,
 				"template": filename,
 				"locals":   locals,
@@ -123,10 +120,16 @@ func SetupEmailTemplate[L any](filename, subjectLine string) func(emailAddress s
 		}
 
 		// Send Email
-		EmailLogger.Info("Attempt", map[string]any{
+		err := Email.Send(emailAddress, subjectLine, buffer.String())
+		dat := map[string]any{
 			"address":  emailAddress,
 			"template": filename,
-			"error":    Email.Send(emailAddress, subjectLine, buffer.String()),
-		})
+			"error":    err,
+		}
+		if err == nil {
+			LoggerEmail.Info("Email Sent", dat)
+		} else {
+			LoggerEmail.Error("Email Failed", dat)
+		}
 	}
 }

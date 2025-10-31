@@ -13,10 +13,8 @@ type StorageProvider interface {
 }
 
 var Storage StorageProvider
-var StorageLogger LoggerInstance
 
 func SetupStorageProvider(stop context.Context, await *sync.WaitGroup) {
-	StorageLogger = Logger.New("storage")
 	t := time.Now()
 
 	switch STORAGE_PROVIDER {
@@ -27,13 +25,13 @@ func SetupStorageProvider(stop context.Context, await *sync.WaitGroup) {
 	case "s3":
 		Storage = &storageProviderS3{}
 	default:
-		StorageLogger.Fatal("Unknown Provider", STORAGE_PROVIDER)
+		LoggerStorage.Fatal("Unknown Provider", STORAGE_PROVIDER)
 	}
 
 	if err := Storage.Start(stop, await); err != nil {
-		StorageLogger.Fatal("Startup Failed", err)
+		LoggerStorage.Fatal("Startup Failed", err)
 	}
-	StorageLogger.Info("Ready", map[string]any{
+	LoggerStorage.Info("Ready", map[string]any{
 		"time": time.Since(t).String(),
 	})
 }

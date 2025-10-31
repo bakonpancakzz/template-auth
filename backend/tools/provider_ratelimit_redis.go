@@ -45,7 +45,7 @@ func (p *ratelimitProviderRedis) Start(stop context.Context, await *sync.WaitGro
 		defer await.Done()
 		<-stop.Done()
 		rdb.Close()
-		RatelimitLogger.Info("Closed", nil)
+		LoggerRatelimit.Info("Closed", nil)
 	}()
 
 	p.Client = rdb

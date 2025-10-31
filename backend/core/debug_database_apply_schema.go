@@ -19,7 +19,7 @@ func DebugDatabaseApplySchema() {
 	if err != nil {
 		panic("failed to apply schema: " + err.Error())
 	}
-	tools.DatabaseLogger.Info("Schema Applied", nil)
+	tools.LoggerDatabase.Info("Schema Applied", nil)
 
 	stop()
 	stopWg.Wait()

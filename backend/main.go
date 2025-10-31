@@ -13,8 +13,6 @@ import (
 	"github.com/bakonpancakzz/template-auth/tools"
 )
 
-var mainLogger tools.LoggerInstance
-
 func main() {
 	time.Local = time.UTC
 
@@ -25,9 +23,9 @@ func main() {
 	var stopWg sync.WaitGroup
 	var syncWg sync.WaitGroup
 
-	tools.SetupLogger(stopCtx, &stopWg)
-	mainLogger = tools.Logger.New("main")
+	tools.LoggerMain.Info("Starting Services", nil)
 	for _, fn := range []func(stop context.Context, await *sync.WaitGroup){
+		tools.SetupLogger,
 		tools.SetupDatabase,
 		tools.SetupGeolocation,
 		tools.SetupEmailProvider,
@@ -55,7 +53,7 @@ func main() {
 	go func() {
 		<-timeout.Done()
 		if timeout.Err() == context.DeadlineExceeded {
-			mainLogger.Fatal("Shutdown Deadline Exceeded", nil)
+			tools.LoggerMain.Fatal("Shutdown Deadline Exceeded", nil)
 		}
 	}()
 	stopWg.Wait()
@@ -83,7 +81,7 @@ func StartupHTTP(stop context.Context, await *sync.WaitGroup) {
 			tools.HTTP_TLS_CA,
 		)
 		if err != nil {
-			mainLogger.Fatal("TLS Configuration Error", err)
+			tools.LoggerHttp.Fatal("TLS Configuration Error", err)
 			return
 		}
 		svr.TLSConfig = tls
@@ -95,18 +93,18 @@ func StartupHTTP(stop context.Context, await *sync.WaitGroup) {
 		defer await.Done()
 		<-stop.Done()
 		svr.Shutdown(context.Background())
-		mainLogger.Info("Server Closed", nil)
+		tools.LoggerHttp.Info("Server Closed", nil)
 	}()
 
 	// Server Startup
 	var err error
-	mainLogger.Info("Listening", svr.Addr)
+	tools.LoggerHttp.Info("Listening", svr.Addr)
 	if tools.HTTP_TLS_ENABLED {
 		err = svr.ListenAndServeTLS("", "")
 	} else {
 		err = svr.ListenAndServe()
 	}
 	if err != http.ErrServerClosed {
-		mainLogger.Fatal("Startup Failed", err)
+		tools.LoggerHttp.Fatal("Startup Failed", err)
 	}
 }

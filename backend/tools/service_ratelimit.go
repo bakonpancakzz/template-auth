@@ -20,10 +20,8 @@ type RatelimitProvider interface {
 }
 
 var Ratelimit RatelimitProvider
-var RatelimitLogger LoggerInstance
 
 func SetupRatelimitProvider(stop context.Context, await *sync.WaitGroup) {
-	RatelimitLogger = Logger.New("ratelimit")
 	t := time.Now()
 
 	switch RATELIMIT_PROVIDER {
@@ -32,13 +30,13 @@ func SetupRatelimitProvider(stop context.Context, await *sync.WaitGroup) {
 	case "redis":
 		Ratelimit = &ratelimitProviderRedis{}
 	default:
-		RatelimitLogger.Fatal("Unknown Provider", RATELIMIT_PROVIDER)
+		LoggerRatelimit.Fatal("Unknown Provider", RATELIMIT_PROVIDER)
 	}
 
 	if err := Ratelimit.Start(stop, await); err != nil {
-		RatelimitLogger.Fatal("Startup Failed", err)
+		LoggerRatelimit.Fatal("Startup Failed", err)
 	}
-	RatelimitLogger.Info("Ready", map[string]any{
+	LoggerRatelimit.Info("Ready", map[string]any{
 		"time": time.Since(t).String(),
 	})
 }

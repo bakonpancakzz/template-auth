@@ -30,19 +30,17 @@ var (
 	entriesIPV4 []IPV4Entry
 	entriesIPV6 []IPV6Entry
 	entriesText []string
-	GeoLogger   LoggerInstance
 )
 
 func SetupGeolocation(stop context.Context, await *sync.WaitGroup) {
 	// Arguments are unused, they just exist for async startup :L
-	GeoLogger = Logger.New("geolocation")
 	t := time.Now()
 
 	// Decompress Archive
 	reader := bytes.NewReader(include.ArchiveGeolocation)
 	gunzip, err := gzip.NewReader(reader)
 	if err != nil {
-		GeoLogger.Fatal("Invalid archive header", err)
+		LoggerGeolocation.Fatal("Invalid archive header", err)
 	}
 	defer gunzip.Close()
 
@@ -54,7 +52,7 @@ func SetupGeolocation(stop context.Context, await *sync.WaitGroup) {
 	b255 := make([]byte, 255) // string
 	var load = func(buf []byte) []byte {
 		if _, err := io.ReadFull(gunzip, buf); err != nil {
-			GeoLogger.Fatal("Failed to read archive", err)
+			LoggerGeolocation.Fatal("Failed to read archive", err)
 		}
 		return buf
 	}
@@ -89,7 +87,7 @@ func SetupGeolocation(stop context.Context, await *sync.WaitGroup) {
 		entriesText[i] = string(load(b255[:load(b1)[0]]))
 	}
 
-	GeoLogger.Info("Ready", map[string]any{
+	LoggerGeolocation.Info("Ready", map[string]any{
 		"time":        time.Since(t).String(),
 		"loc_strings": len(entriesText),
 		"ipv4_ranges": len(entriesIPV4),
