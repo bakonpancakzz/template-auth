@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -27,64 +28,64 @@ type IPV6Entry struct {
 }
 
 var (
-	entriesIPV4 []IPV4Entry
-	entriesIPV6 []IPV6Entry
-	entriesText []string
+	entriesIPV4 []IPV4Entry = nil
+	entriesIPV6 []IPV6Entry = nil
+	entriesText []string    = nil
 )
 
 func SetupGeolocation(stop context.Context, await *sync.WaitGroup) {
-	// Arguments are unused, they just exist for async startup :L
 	t := time.Now()
 
 	// Decompress Archive
-	reader := bytes.NewReader(include.ArchiveGeolocation)
-	gunzip, err := gzip.NewReader(reader)
+	archive := bytes.NewReader(include.ArchiveGeolocation)
+	gunzip, err := gzip.NewReader(archive)
 	if err != nil {
-		LoggerGeolocation.Fatal("Invalid archive header", err)
+		LoggerGeolocation.Fatal("Invalid Archive Header", err.Error())
 	}
 	defer gunzip.Close()
 
-	// Buffers
-	i32 := int32(0)
-	b1 := make([]byte, 1)     // string length
-	b4 := make([]byte, 4)     // ipv4 range or uint32
-	b16 := make([]byte, 16)   // ipv6 range
-	b255 := make([]byte, 255) // string
-	var load = func(buf []byte) []byte {
-		if _, err := io.ReadFull(gunzip, buf); err != nil {
-			LoggerGeolocation.Fatal("Failed to read archive", err)
+	// Preallocate Tables
+	buffer := make([]byte, 256)
+	reader := bufio.NewReaderSize(gunzip, 1<<20)
+	read := func(n int) {
+		if _, err := io.ReadAtLeast(reader, buffer[:n], n); err != nil {
+			LoggerGeolocation.Fatal("Failed to Read Archive", err.Error())
 		}
-		return buf
 	}
-	var loadTime = func() int32 {
-		binary.Read(gunzip, binary.LittleEndian, &i32)
-		return i32
-	}
+	read(12)
+	num4 := int(binary.LittleEndian.Uint32(buffer[0:4]))
+	num6 := int(binary.LittleEndian.Uint32(buffer[4:8]))
+	numT := int(binary.LittleEndian.Uint32(buffer[8:12]))
+	entriesIPV4 = make([]IPV4Entry, num4)
+	entriesIPV6 = make([]IPV6Entry, num6)
+	entriesText = make([]string, numT)
 
 	// Decode Entries
-	entriesIPV4 = make([]IPV4Entry, binary.LittleEndian.Uint32(load(b4)))
-	entriesIPV6 = make([]IPV6Entry, binary.LittleEndian.Uint32(load(b4)))
-	entriesText = make([]string, binary.LittleEndian.Uint32(load(b4)))
-	for i := 0; i < len(entriesIPV4); i++ {
+	for i := 0; i < num4; i++ {
+		read(20)
 		entriesIPV4[i] = IPV4Entry{
-			RangeStart:     binary.LittleEndian.Uint32(load(b4)),
-			CountryIndex:   binary.LittleEndian.Uint32(load(b4)),
-			RegionIndex:    binary.LittleEndian.Uint32(load(b4)),
-			CityIndex:      binary.LittleEndian.Uint32(load(b4)),
-			TimezoneOffset: loadTime(),
+			RangeStart:     binary.LittleEndian.Uint32(buffer[0:4]),
+			CountryIndex:   binary.LittleEndian.Uint32(buffer[4:8]),
+			RegionIndex:    binary.LittleEndian.Uint32(buffer[8:12]),
+			CityIndex:      binary.LittleEndian.Uint32(buffer[12:16]),
+			TimezoneOffset: int32(binary.LittleEndian.Uint32(buffer[16:20])),
 		}
 	}
-	for i := 0; i < len(entriesIPV6); i++ {
+	for i := 0; i < num6; i++ {
+		read(32)
 		entriesIPV6[i] = IPV6Entry{
-			RangeStart:     [16]byte(load(b16)),
-			CountryIndex:   binary.LittleEndian.Uint32(load(b4)),
-			RegionIndex:    binary.LittleEndian.Uint32(load(b4)),
-			CityIndex:      binary.LittleEndian.Uint32(load(b4)),
-			TimezoneOffset: loadTime(),
+			RangeStart:     [16]byte(buffer[:16]),
+			CountryIndex:   binary.LittleEndian.Uint32(buffer[16:20]),
+			RegionIndex:    binary.LittleEndian.Uint32(buffer[20:24]),
+			CityIndex:      binary.LittleEndian.Uint32(buffer[24:28]),
+			TimezoneOffset: int32(binary.LittleEndian.Uint32(buffer[28:32])),
 		}
 	}
-	for i := 0; i < len(entriesText); i++ {
-		entriesText[i] = string(load(b255[:load(b1)[0]]))
+	for i := 0; i < numT; i++ {
+		read(1)
+		l := int(buffer[0])
+		read(l)
+		entriesText[i] = string(buffer[:l])
 	}
 
 	LoggerGeolocation.Info("Ready", map[string]any{

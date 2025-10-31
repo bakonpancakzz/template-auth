@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"encoding/binary"
@@ -9,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"path"
@@ -59,6 +61,7 @@ func FindString(givenString string) uint32 {
 		return index
 	}
 }
+
 func ParseOffset(offset string) int32 {
 	if offset == "-" {
 		return 0
@@ -128,64 +131,65 @@ func main() {
 	}
 
 	// Process IPV4 CSV
-	// {
-	// 	log.Println("Downloading IPV4 Archive")
-	// 	f := Download("DB11LITECSV", "IP2LOCATION-LITE-DB11.CSV")
-	// 	defer f.Close()
+	{
+		log.Println("Downloading IPV4 Archive")
+		f := Download("DB11LITECSV", "IP2LOCATION-LITE-DB11.CSV")
+		defer f.Close()
 
-	// 	log.Println("Processing IPV4 Archive")
-	// 	scanner := bufio.NewScanner(f)
-	// 	for scanner.Scan() {
-	// 		splits := strings.SplitN(scanner.Text(), ",", 10)
-	// 		if len(splits) != 10 {
-	// 			log.Fatalf("Error Decoding Line %d: Bad Split\n", len(ENTRIES_IPV4)+1)
-	// 		}
+		log.Println("Processing IPV4 Archive")
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			splits := strings.SplitN(scanner.Text(), ",", 10)
+			if len(splits) != 10 {
+				log.Fatalf("Error Decoding Line %d: Bad Split\n", len(ENTRIES_IPV4)+1)
+			}
 
-	// 		rangeStart, err := strconv.Atoi(TrimString(splits[0]))
-	// 		if err != nil {
-	// 			log.Fatalf("Error Decoding Range on Line %d: %s\n", len(ENTRIES_IPV4)+1, err)
-	// 		}
+			rangeStart, err := strconv.Atoi(TrimString(splits[0]))
+			if err != nil {
+				log.Fatalf("Error Decoding Range on Line %d: %s\n", len(ENTRIES_IPV4)+1, err)
+			}
 
-	// 		ENTRIES_IPV4 = append(ENTRIES_IPV4, IPV4Entry{
-	// 			RangeStart:     uint32(rangeStart),
-	// 			CountryIndex:   FindString(TrimString(splits[3])),
-	// 			RegionIndex:    FindString(TrimString(splits[4])),
-	// 			CityIndex:      FindString(TrimString(splits[5])),
-	// 			TimezoneOffset: ParseOffset(TrimString(splits[9])),
-	// 		})
-	// 	}
-	// }
-	// // Process IPV6 CSV
-	// {
-	// 	log.Println("Downloading IPV6 Archive")
-	// 	f := Download("DB11LITECSVIPV6", "IP2LOCATION-LITE-DB11.IPV6.CSV")
-	// 	defer f.Close()
+			ENTRIES_IPV4 = append(ENTRIES_IPV4, IPV4Entry{
+				RangeStart:     uint32(rangeStart),
+				CountryIndex:   FindString(TrimString(splits[3])),
+				RegionIndex:    FindString(TrimString(splits[4])),
+				CityIndex:      FindString(TrimString(splits[5])),
+				TimezoneOffset: ParseOffset(TrimString(splits[9])),
+			})
+		}
+	}
 
-	// 	log.Println("Processing IPV6 Archive")
-	// 	scanner := bufio.NewScanner(f)
-	// 	for scanner.Scan() {
-	// 		splits := strings.SplitN(scanner.Text(), ",", 10)
-	// 		if len(splits) != 10 {
-	// 			log.Fatalf("Error Decoding Line %d: Bad Split\n", len(ENTRIES_IPV6)+1)
-	// 		}
-	// 		rangeStr := TrimString(splits[0])
-	// 		bigInt := new(big.Int)
-	// 		if _, ok := bigInt.SetString(rangeStr, 10); !ok {
-	// 			log.Fatalf("Error Decoding Range on Line %d\n", len(ENTRIES_IPV6)+1)
-	// 		}
-	// 		rangeBytes := bigInt.FillBytes(make([]byte, 16)) // big-endian by default
-	// 		rangeStart := [16]byte{}
-	// 		copy(rangeStart[:], rangeBytes)
+	// Process IPV6 CSV
+	{
+		log.Println("Downloading IPV6 Archive")
+		f := Download("DB11LITECSVIPV6", "IP2LOCATION-LITE-DB11.IPV6.CSV")
+		defer f.Close()
 
-	// 		ENTRIES_IPV6 = append(ENTRIES_IPV6, IPV6Entry{
-	// 			RangeStart:     rangeStart,
-	// 			CountryIndex:   FindString(TrimString(splits[3])),
-	// 			RegionIndex:    FindString(TrimString(splits[4])),
-	// 			CityIndex:      FindString(TrimString(splits[5])),
-	// 			TimezoneOffset: ParseOffset(TrimString(splits[9])),
-	// 		})
-	// 	}
-	// }
+		log.Println("Processing IPV6 Archive")
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			splits := strings.SplitN(scanner.Text(), ",", 10)
+			if len(splits) != 10 {
+				log.Fatalf("Error Decoding Line %d: Bad Split\n", len(ENTRIES_IPV6)+1)
+			}
+			rangeStr := TrimString(splits[0])
+			bigInt := new(big.Int)
+			if _, ok := bigInt.SetString(rangeStr, 10); !ok {
+				log.Fatalf("Error Decoding Range on Line %d\n", len(ENTRIES_IPV6)+1)
+			}
+			rangeBytes := bigInt.FillBytes(make([]byte, 16)) // big-endian by default
+			rangeStart := [16]byte{}
+			copy(rangeStart[:], rangeBytes)
+
+			ENTRIES_IPV6 = append(ENTRIES_IPV6, IPV6Entry{
+				RangeStart:     rangeStart,
+				CountryIndex:   FindString(TrimString(splits[3])),
+				RegionIndex:    FindString(TrimString(splits[4])),
+				CityIndex:      FindString(TrimString(splits[5])),
+				TimezoneOffset: ParseOffset(TrimString(splits[9])),
+			})
+		}
+	}
 
 	// Setup Compression
 	log.Printf(
@@ -195,13 +199,14 @@ func main() {
 	if err := os.MkdirAll(path.Dir(OUTPUT_LOCATION), 0755); err != nil {
 		log.Fatalln("Error Creating Archive Folder:", err)
 	}
+
 	output, err := os.Create(OUTPUT_LOCATION)
 	if err != nil {
 		log.Fatalln("Error Creating Archive File:", err)
 	}
 	defer output.Close()
 
-	writer := gzip.NewWriter(output)
+	writer, err := gzip.NewWriterLevel(output, gzip.BestCompression)
 	if err != nil {
 		log.Fatalln("Error Creating Compressor:", err)
 	}
