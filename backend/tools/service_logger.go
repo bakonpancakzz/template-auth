@@ -36,7 +36,7 @@ func SetupLogger(stop context.Context, await *sync.WaitGroup) {
 	}
 
 	if err := Logger.Start(stop, await); err != nil {
-		LoggerLogger.Fatal("Startup Failed", err)
+		LoggerLogger.Fatal("Startup Failed", err.Error())
 	}
 	LoggerLogger.Info("Ready", map[string]any{
 		"time": time.Since(t).String(),

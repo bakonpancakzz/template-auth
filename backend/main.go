@@ -81,7 +81,7 @@ func StartupHTTP(stop context.Context, await *sync.WaitGroup) {
 			tools.HTTP_TLS_CA,
 		)
 		if err != nil {
-			tools.LoggerHttp.Fatal("TLS Configuration Error", err)
+			tools.LoggerHttp.Fatal("TLS Configuration Error", err.Error())
 			return
 		}
 		svr.TLSConfig = tls
@@ -105,6 +105,6 @@ func StartupHTTP(stop context.Context, await *sync.WaitGroup) {
 		err = svr.ListenAndServe()
 	}
 	if err != http.ErrServerClosed {
-		tools.LoggerHttp.Fatal("Startup Failed", err)
+		tools.LoggerHttp.Fatal("Startup Failed", err.Error())
 	}
 }

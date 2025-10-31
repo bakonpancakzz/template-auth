@@ -29,7 +29,7 @@ func SetupStorageProvider(stop context.Context, await *sync.WaitGroup) {
 	}
 
 	if err := Storage.Start(stop, await); err != nil {
-		LoggerStorage.Fatal("Startup Failed", err)
+		LoggerStorage.Fatal("Startup Failed", err.Error())
 	}
 	LoggerStorage.Info("Ready", map[string]any{
 		"time": time.Since(t).String(),

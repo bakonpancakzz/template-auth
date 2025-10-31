@@ -34,7 +34,7 @@ func SetupRatelimitProvider(stop context.Context, await *sync.WaitGroup) {
 	}
 
 	if err := Ratelimit.Start(stop, await); err != nil {
-		LoggerRatelimit.Fatal("Startup Failed", err)
+		LoggerRatelimit.Fatal("Startup Failed", err.Error())
 	}
 	LoggerRatelimit.Info("Ready", map[string]any{
 		"time": time.Since(t).String(),

@@ -19,10 +19,10 @@ func SetupDatabase(stop context.Context, await *sync.WaitGroup) {
 	var err error
 
 	if Database, err = pgxpool.New(ctx, DATABASE_URL); err != nil {
-		LoggerDatabase.Fatal("Failed to create pool", err)
+		LoggerDatabase.Fatal("Failed to create pool", err.Error())
 	}
 	if err = Database.Ping(ctx); err != nil {
-		LoggerDatabase.Fatal("Failed to ping database", err)
+		LoggerDatabase.Fatal("Failed to ping database", err.Error())
 	}
 
 	// Shutdown Logic

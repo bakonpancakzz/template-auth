@@ -82,7 +82,7 @@ func SetupEmailProvider(stop context.Context, await *sync.WaitGroup) {
 	}
 
 	if err := Email.Start(stop, await); err != nil {
-		LoggerEmail.Fatal("Startup Failed", err)
+		LoggerEmail.Fatal("Startup Failed", err.Error())
 	}
 	LoggerEmail.Info("Ready", map[string]any{
 		"time": time.Since(t).String(),
