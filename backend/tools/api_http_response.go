@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"strings"
 )
 
@@ -22,6 +23,8 @@ func SendClientError(w http.ResponseWriter, r *http.Request, e APIError) {
 // Cancel Request and Respond with a Generic Server Error
 func SendServerError(w http.ResponseWriter, r *http.Request, err error) {
 	LoggerHttp.Error(err.Error(), map[string]any{
+		"stack":   string(debug.Stack()),
+		"method":  r.Method,
 		"url":     r.URL.String(),
 		"headers": r.Header,
 		"session": r.Context().Value(SESSION_KEY),
