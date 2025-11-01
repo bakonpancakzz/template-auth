@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/bakonpancakz/template-auth/tools"
-	"github.com/jackc/pgx/v5"
 )
 
 func DELETE_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
@@ -15,47 +14,32 @@ func DELETE_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
 		tools.SendClientError(w, r, tools.ERROR_OAUTH2_USERS_ONLY)
 		return
 	}
-
-	snowflake, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if !session.Elevated {
+		tools.SendClientError(w, r, tools.ERROR_MFA_ESCALATION_REQUIRED)
+		return
+	}
+	snowflake, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 	if err != nil {
-		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_CONNECTION)
+		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 		return
 	}
 	ctx, cancel := tools.NewContext()
 	defer cancel()
 
-	// Remove Image from Application
-	var hash *string
-	err = tools.Database.QueryRow(ctx,
-		`UPDATE auth.applications SET 
-			icon_hash = NULL 
-		WHERE id = $1 AND user_id = $2 
-		RETURNING icon_hash`,
-		snowflake, session.UserID,
-	).Scan(&hash)
-	if err == pgx.ErrNoRows {
-		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
-		return
-	}
+	// Delete Application if Created by User
+	tag, err := tools.Database.Exec(ctx,
+		"DELETE FROM auth.applications WHERE id = $1 AND user_id = $2",
+		snowflake,
+		session.UserID,
+	)
 	if err != nil {
 		tools.SendServerError(w, r, err)
 		return
 	}
-
-	// Delete Icon from Storage
-	if hash == nil {
-		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_IMAGE)
+	if tag.RowsAffected() == 0 {
+		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 		return
 	}
-	go func(h string) {
-		paths := tools.ImagePaths(tools.ImageOptionsIcons, snowflake, h)
-		if err := tools.Storage.Delete(paths...); err != nil {
-			tools.LoggerStorage.Error("Failed to Delete Application Icon", map[string]any{
-				"paths": paths,
-				"error": err.Error(),
-			})
-		}
-	}(*hash)
 
 	w.WriteHeader(http.StatusNoContent)
 }

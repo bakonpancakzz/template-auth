@@ -21,6 +21,7 @@ var (
 	ERROR_UNKNOWN_SESSION                   = APIError{Status: 404, Code: 1040, Message: "Unknown Session"}
 	ERROR_UNKNOWN_APPLICATION               = APIError{Status: 404, Code: 1050, Message: "Unknown Application"}
 	ERROR_UNKNOWN_CONNECTION                = APIError{Status: 404, Code: 1060, Message: "Unknown Connection"}
+	ERROR_UNKNOWN_IMAGE                     = APIError{Status: 404, Code: 1070, Message: "Unknown Image"}
 	ERROR_IMAGE_UNSUPPORTED                 = APIError{Status: 400, Code: 2010, Message: "Unsupported Image Format (Supports: WEBP, GIF, JPEG, PNG)"}
 	ERROR_IMAGE_MALFORMED                   = APIError{Status: 400, Code: 2020, Message: "Invalid or Malformed Image Data"}
 	ERROR_ACCESS_REVOKED                    = APIError{Status: 401, Code: 3010, Message: "Access Revoked"}
