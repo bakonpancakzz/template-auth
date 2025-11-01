@@ -126,9 +126,6 @@ func SetupMux() *http.ServeMux {
 	})
 
 	// User
-	mux.Handle("/users/{id}", tools.MethodHandler{
-		http.MethodGet: tools.Chain(routes.GET_Users_ID, rateClientRead),
-	})
 	mux.Handle("/users/@me", tools.MethodHandler{
 		http.MethodGet:    tools.Chain(routes.GET_Users_Me, rateClientRead, session),
 		http.MethodPatch:  tools.Chain(routes.PATCH_Users_Me, rateClientWrite, session, limitJSON),
