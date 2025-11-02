@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"reflect"
@@ -87,4 +88,24 @@ func ValidateQuery(w http.ResponseWriter, r *http.Request, b any) bool {
 	}
 
 	return ValidateBody(w, r, b)
+}
+
+// Encode and Compress Outgoing Body
+func SendJSON(w http.ResponseWriter, r *http.Request, b any) error {
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+		z := gzip.NewWriter(w)
+		defer z.Close()
+
+		e := json.NewEncoder(z)
+		e.SetEscapeHTML(false)
+		return e.Encode(b)
+	} else {
+		e := json.NewEncoder(w)
+		e.SetEscapeHTML(false)
+		return e.Encode(b)
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -30,7 +31,12 @@ func SetupLogger(stop context.Context, await *sync.WaitGroup) {
 
 	switch LOGGER_PROVIDER {
 	case "console":
-		// enabled by fallback
+		// enabled by default per fallback
+	case "test":
+		if !testing.Testing() {
+			LoggerStorage.Fatal("Attempt to use testing provider outside of testing", nil)
+		}
+		Logger = &loggerProviderConsole{}
 	default:
 		panic("unknown logger provider: " + LOGGER_PROVIDER)
 	}

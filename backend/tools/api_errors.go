@@ -1,5 +1,11 @@
 package tools
 
+import (
+	"fmt"
+	"net/http"
+	"runtime/debug"
+)
+
 type APIError struct {
 	Status  int
 	Code    int
@@ -53,3 +59,33 @@ var (
 	ERROR_OAUTH2_FORM_INVALID_REFRESH_TOKEN = APIError{Status: 400, Code: 6080, Message: "Invalid 'refresh_token'"}
 	ERROR_OAUTH2_FORM_INVALID_SCOPE         = APIError{Status: 400, Code: 6090, Message: "Invalid 'scope'"}
 )
+
+// Cancel Request and Respond with an API Error
+func SendClientError(w http.ResponseWriter, r *http.Request, e APIError) {
+	w.WriteHeader(e.Status)
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, `{"code":%d,"message":%q}`, e.Code, e.Message)
+}
+
+// Cancel Request and Respond with a Generic Server Error
+func SendServerError(w http.ResponseWriter, r *http.Request, err error) {
+	LoggerHttp.Error(err.Error(), map[string]any{
+		"stack":   string(debug.Stack()),
+		"method":  r.Method,
+		"url":     r.URL.String(),
+		"headers": r.Header,
+		"session": r.Context().Value(SESSION_KEY),
+		"error":   err,
+	})
+	SendClientError(w, r, ERROR_GENERIC_SERVER)
+}
+
+// Cancel Request and Respond with a Validation Error
+func SendFormError(w http.ResponseWriter, r *http.Request, verrs ...ValidationError) {
+	w.WriteHeader(ERROR_BODY_INVALID.Status)
+	SendJSON(w, r, map[string]any{
+		"code":    ERROR_BODY_INVALID.Code,
+		"message": ERROR_BODY_INVALID.Message,
+		"errors":  verrs,
+	})
+}

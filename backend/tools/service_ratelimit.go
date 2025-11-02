@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -25,10 +26,15 @@ func SetupRatelimitProvider(stop context.Context, await *sync.WaitGroup) {
 	t := time.Now()
 
 	switch RATELIMIT_PROVIDER {
-	case "local":
-		Ratelimit = &ratelimitProviderLocal{}
 	case "redis":
 		Ratelimit = &ratelimitProviderRedis{}
+	case "local":
+		Ratelimit = &ratelimitProviderLocal{}
+	case "test":
+		if !testing.Testing() {
+			LoggerStorage.Fatal("Attempt to use testing provider outside of testing", nil)
+		}
+		Ratelimit = &ratelimitProviderLocal{}
 	default:
 		LoggerRatelimit.Fatal("Unknown Provider", RATELIMIT_PROVIDER)
 	}

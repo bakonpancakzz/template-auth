@@ -11,30 +11,37 @@ import (
 	"time"
 )
 
+type contextKey string
+
 const (
-	EPOCH_MILLI                   = 1207008000000       // Generic EPOCH (April 1st 2008, Teto b-day!)
-	EPOCH_SECONDS                 = EPOCH_MILLI / 1000  // Generic EPOCH in Seconds
-	CONTEXT_TIMEOUT               = 10 * time.Second    // Default Context Timeout
-	LIFETIME_OAUTH2_GRANT_TOKEN   = 15 * time.Second    // Lifetime for OAuth2 Grant Token
-	LIFETIME_OAUTH2_ACCESS_TOKEN  = 7 * 24 * time.Hour  // Lifetime for OAuth2 Access Token
-	LIFETIME_TOKEN_USER_ELEVATION = 10 * time.Minute    // Lifetime for User Elevation
-	LIFETIME_TOKEN_USER_COOKIE    = 30 * 24 * time.Hour // Lifetime for User Cookie
-	LIFETIME_TOKEN_EMAIL_PASSCODE = 15 * time.Minute    // Lifetime for MFA Passcode
-	LIFETIME_TOKEN_EMAIL_LOGIN    = 24 * time.Hour      // Lifetime for Verify Login Token
-	LIFETIME_TOKEN_EMAIL_VERIFY   = 24 * time.Hour      // Lifetime for Verify Email Token
-	LIFETIME_TOKEN_EMAIL_RESET    = 24 * time.Hour      // Lifetime for Password Reset Token
-	PASSWORD_HASH_EFFORT          = 12                  // Password Hashing Effort
-	PASSWORD_HISTORY_LIMIT        = 3                   // Password History Length
-	MFA_PASSCODE_LENGTH           = 6                   // TOTP Passcode String Length (Do Not Change)
-	MFA_RECOVERY_LENGTH           = 8                   // TOTP Recovery Code Length
-	TOKEN_PREFIX_USER             = "User"
-	TOKEN_PREFIX_BEARER           = "Bearer"
+	EPOCH_MILLI                              = 1207008000000       // Generic EPOCH (April 1st 2008, Teto b-day!)
+	EPOCH_SECONDS                            = EPOCH_MILLI / 1000  // Generic EPOCH in Seconds
+	CONTEXT_TIMEOUT                          = 10 * time.Second    // Default Context Timeout
+	LIFETIME_OAUTH2_GRANT_TOKEN              = 15 * time.Second    // Lifetime for OAuth2 Grant Token
+	LIFETIME_OAUTH2_ACCESS_TOKEN             = 7 * 24 * time.Hour  // Lifetime for OAuth2 Access Token
+	LIFETIME_TOKEN_USER_ELEVATION            = 10 * time.Minute    // Lifetime for User Elevation
+	LIFETIME_TOKEN_USER_COOKIE               = 30 * 24 * time.Hour // Lifetime for User Cookie
+	LIFETIME_TOKEN_EMAIL_PASSCODE            = 15 * time.Minute    // Lifetime for MFA Passcode
+	LIFETIME_TOKEN_EMAIL_LOGIN               = 24 * time.Hour      // Lifetime for Verify Login Token
+	LIFETIME_TOKEN_EMAIL_VERIFY              = 24 * time.Hour      // Lifetime for Verify Email Token
+	LIFETIME_TOKEN_EMAIL_RESET               = 24 * time.Hour      // Lifetime for Password Reset Token
+	PASSWORD_HASH_EFFORT                     = 12                  // Password Hashing Effort
+	PASSWORD_HISTORY_LIMIT                   = 3                   // Password History Length
+	MFA_PASSCODE_LENGTH                      = 6                   // TOTP Passcode String Length (Do Not Change)
+	MFA_RECOVERY_LENGTH                      = 8                   // TOTP Recovery Code Length
+	TOKEN_PREFIX_USER                        = "User"
+	TOKEN_PREFIX_BEARER                      = "Bearer"
+	SESSION_KEY                   contextKey = "gloopert"
 )
 
 var (
 	PRODUCTION                  = EnvString("PRODUCTION", "false") != "false"
-	DATABASE_URL                = EnvString("DATABASE_URL", "postgresql://postgres:password@localhost:5432")
 	MACHINE_ID                  = EnvString("MACHINE_ID", "0")
+	DATABASE_URL                = EnvString("DATABASE_URL", "postgresql://postgres:password@localhost:5432")
+	DATABASE_TLS_ENABLED        = EnvString("DATABASE_TLS_ENABLED", "false") != "false"
+	DATABASE_TLS_CERT           = EnvString("DATABASE_TLS_CERT", "tls_crt.pem")
+	DATABASE_TLS_KEY            = EnvString("DATABASE_TLS_KEY", "tls_key.pem")
+	DATABASE_TLS_CA             = EnvString("DATABASE_TLS_CA", "tls_ca.pem")
 	EMAIL_PROVIDER              = EnvString("EMAIL_PROVIDER", "none")
 	EMAIL_SENDER_NAME           = EnvString("EMAIL_SENDER_NAME", "noreply")
 	EMAIL_SENDER_ADDRESS        = EnvString("EMAIL_SENDER_ADDRESS", "noreply@example.org")

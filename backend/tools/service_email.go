@@ -5,6 +5,7 @@ import (
 	"context"
 	"html/template"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/bakonpancakz/template-auth/include"
@@ -76,6 +77,11 @@ func SetupEmailProvider(stop context.Context, await *sync.WaitGroup) {
 	case "emailengine":
 		Email = &emailProviderEmailEngine{}
 	case "none":
+		Email = &emailProviderNone{}
+	case "test":
+		if !testing.Testing() {
+			LoggerEmail.Fatal("Attempt to use testing provider outside of testing", nil)
+		}
 		Email = &emailProviderNone{}
 	default:
 		LoggerEmail.Fatal("Unknown Provider", EMAIL_PROVIDER)

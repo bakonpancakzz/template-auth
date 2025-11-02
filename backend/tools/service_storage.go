@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -18,12 +19,17 @@ func SetupStorageProvider(stop context.Context, await *sync.WaitGroup) {
 	t := time.Now()
 
 	switch STORAGE_PROVIDER {
-	case "none":
-		Storage = &storageProviderNone{}
-	case "disk":
-		Storage = &storageProviderDisk{}
 	case "s3":
 		Storage = &storageProviderS3{}
+	case "disk":
+		Storage = &storageProviderDisk{}
+	case "none":
+		Storage = &storageProviderNone{}
+	case "test":
+		if !testing.Testing() {
+			LoggerStorage.Fatal("Attempt to use testing provider outside of testing", nil)
+		}
+		Storage = &storageProviderNone{}
 	default:
 		LoggerStorage.Fatal("Unknown Provider", STORAGE_PROVIDER)
 	}
