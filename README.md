@@ -1,34 +1,79 @@
-# 🔒 `template-auth`
-Self-hosted authentication service and OAuth2 provider, built with **Go** and **React**.
+# 🔐 `@template-auth`
+A self-hosted authentication and OAuth2 provider built with **Go** and **React**.  
+Designed to act as a **central login server**, allowing smaller services to authenticate through its built-in OAuth2 framework.
 
-Designed to act as a **central login server**, with smaller services authenticating
-through the built-in **OAuth2 framework**.
+> **For Contributors:** Each subdirectory is its own self-contained repository. 
+> See their respective READMEs for implementation details.
 
-## 🌟 Features
-- PostgreSQL database schema ([view here](https://github.com/bakonpancakz/template-auth/blob/main/backend/include/schema.sql))
-- Secure user authentication with **TOTP**, **email**, and **passwords**
-- Custom user profiles (avatar, banner, accent color, etc.)
-- Custom user applications with **OAuth2** support
-- Internal services:
-  - **Geolocation** via [IP2Location LITE](https://lite.ip2location.com/)
-  - **Email templates**
-    - Supported providers:
-      - [AWS Simple Email Service](https://aws.amazon.com/ses/)
-      - [EmailEngine](https://panca.kz/goto/emailengine)
-  - **File management**
-    - Supported providers:
-      - [AWS S3](https://aws.amazon.com/s3/) or compatible APIs
-      - Local disk storage
-- Easy to set up and highly configurable
-- Minimal, auditable dependency list  
-- Static site for account management
+- [🔐 `@template-auth`](#-template-auth)
+  - [🔑 Security First](#-security-first)
+  - [🎨 Customizable](#-customizable)
+  - [🔀 OAuth2 Support](#-oauth2-support)
+  - [🚨 Minimal and Auditable](#-minimal-and-auditable)
+  - [📦 Provider Integration](#-provider-integration)
+  - [Showcase](#showcase)
 
-> 🔰 Quickly set up a preview instance using **Docker Compose**!  
-> Guide available in the [`preview`](https://github.com/bakonpancakz/template-auth/blob/main/preview) directory.
 
-## 📷 Showcase
+## 🔑 Security First
+Protect users from account hijacking through layered security measures.  
+By default, users must complete a security challenge whenever they:
 
-<p align="center">
-  <img src=".github/preview_email.png" height="360"><br>
-  Email prompting user to allow login from a new location
-</p>
+- Log in from a **new IP address**
+- Attempt a **sensitive action**
+
+They’ll be prompted to verify ownership by one of the following:
+
+- Using a **TOTP** (authenticator app) set up earlier  
+- Entering a **passcode** sent to their email  
+- **Re-entering their password**
+
+## 🎨 Customizable
+Users can personalize their profiles with custom display names, pronouns or 
+subtitles, bios, avatars, banners, and accent colors.
+
+Both the **frontend** and **email templates** can be customized by editing a 
+few HTML or CSS files making it easy to tailor the experience to your brand.
+
+## 🔀 OAuth2 Support
+Acts as an OAuth2 provider for your ecosystem of services.  
+Users can register applications, define scopes, and manage authorizations all 
+within the frontend.
+
+## 🚨 Minimal and Auditable
+Lightweight Go backend with minimal dependencies and a clean, testable architecture.
+
+You can spin up a full-stack preview instance (frontend + backend + database) using **Docker Compose**.  
+See the [`preview`](https://github.com/bakonpancakz/template-auth/blob/main/preview) directory for setup instructions.
+
+
+## 📦 Provider Integration
+Includes built-in support for common services:
+
+- **File Storage:** [AWS S3](https://aws.amazon.com/s3/) or local disk
+- **Geolocation:** [IP2Location LITE](https://lite.ip2location.com/)
+- **Email:** [AWS SES](https://aws.amazon.com/ses/), [EmailEngine](https://panca.kz/goto/emailengine)
+
+## Showcase
+
+<table align="center">
+  <tbody>
+    <tr>
+      <td><img src=".github/preview_email.png"></td>
+      <td><img src=".github/preview_login.png"></td>
+    </tr>
+    <tr>
+      <td><p align="center">Verify Login Email</p></td>
+      <td><p align="center">Login Page</p></td>
+    </tr>
+    <tr>
+      <td><img src=".github/preview_profile.png"></td>
+      <td><img src=".github/preview_themed.png"></td>
+    </tr>
+      <tr>
+      <td><p align="center">Profile Customization</p></td>
+      <td><p align="center">Customized Frontend</p></td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
