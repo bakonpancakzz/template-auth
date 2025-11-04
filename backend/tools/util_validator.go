@@ -12,9 +12,9 @@ const (
 	USERNAME_LENGTH_MIN                 = 3
 	USERNAME_LENGTH_MAX                 = 32
 	PASSWORD_LENGTH_MIN                 = 8
+	PASSWORD_LENGTH_MAX                 = 64
 	DESCRIPTION_LENGTH_MIN              = 1
 	DESCRIPTION_LENGTH_MAX              = 320
-	PASSWORD_LENGTH_MAX                 = 256
 	EMAIL_LENGTH_MAX                    = 256
 	DISPLAYNAME_LENGTH_MIN              = 1
 	DISPLAYNAME_LENGTH_MAX              = 32
