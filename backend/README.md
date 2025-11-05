@@ -1,9 +1,9 @@
+<!-- omit from toc -->
 # 📦 @template-auth/backend
 
-The authentication backend requires **Go 1.25.2 or newer**, a local disk for 
+The authentication backend requires **Go 1.25.2 or newer**, a local disk for
 temporary files, and a **PostgreSQL** instance to initialize properly.
 
-- [📦 @template-auth/backend](#-template-authbackend)
 - [🧪 Debugging / Testing](#-debugging--testing)
 - [➕ Contributing](#-contributing)
 - [🔰 Codebase Overview](#-codebase-overview)
@@ -16,55 +16,55 @@ temporary files, and a **PostgreSQL** instance to initialize properly.
 Running `go test ./...` currently requires a live PostgreSQL instance, as
 no mocks have been implemented for the database service yet.
 
-Additional debug commands are available below for development and testing. 
+Additional debug commands are available below for development and testing.
 They override the default startup flow and perform a single operation before
 exiting:
 
-- `debug_database_apply_schema`  
-  Applies the embedded database schema.  
-  Additional configuration for production use is required regarding user 
+- `debug_database_apply_schema`
+  Applies the embedded database schema.
+  Additional configuration for production use is required regarding user
   authentication and versioning.
 
-- `debug_email_render_template`  
-  Renders embedded email templates using dummy literals into the `dist` directory.  
+- `debug_email_render_template`
+  Renders embedded email templates using dummy literals into the `dist` directory.
   Useful for previewing and customizing email templates.
 
 <br>
 
 # ➕ Contributing
-This project was originally developed for personal use, so most features I 
+This project was originally developed for personal use, so most features I
 personally needed are already implemented.
 
 However, contributions are still welcome in the following areas:
 
-- **Bug Fixes**  
-  Although testing catches most logical issues, occasionally an edge case may 
-  be found. Contributions that fix overlooked issues are appreciated! 
+- **Bug Fixes**
+  Although testing catches most logical issues, occasionally an edge case may
+  be found. Contributions that fix overlooked issues are appreciated!
 
-- **Service Providers**  
-  Contributions that expand the list of supported email, rate-limit, storage, 
-  and logging providers are welcome.  
-  Please note that I aim to keep dependencies minimal, so try to keep 
+- **Service Providers**
+  Contributions that expand the list of supported email, rate-limit, storage,
+  and logging providers are welcome.
+  Please note that I aim to keep dependencies minimal, so try to keep
   implementations as lean as possible.
 
-- **Optimizations**  
+- **Optimizations**
   Improvements to database queries, memory usage, and startup time are all
   appreciated.
 
-- **Extended Customization**  
-  Many values have been hardcoded for personal preference.  
-  If you need a custom value, consider modifying the `util_configuration.go` 
+- **Extended Customization**
+  Many values have been hardcoded for personal preference.
+  If you need a custom value, consider modifying the `util_configuration.go`
   file, setting the default to the original value for compatibility.
 
 <br>
 
 # 🔰 Codebase Overview
-The project is organized into several packages, each handling a specific layer 
+The project is organized into several packages, each handling a specific layer
 of the backend. This section gives a quick rundown of what lives where.
 
 ```ini
 # Codebase Overview
-The project is organized into several packages, each handling a specific layer 
+The project is organized into several packages, each handling a specific layer
 of the backend. This section gives a quick rundown of what lives where.
 
 ```ini
@@ -108,8 +108,8 @@ of the backend. This section gives a quick rundown of what lives where.
 <br>
 
 # 🔧 Configuration
-The backend is configured exclusively via **environment variables**.  
-The table below includes all configurable values: 
+The backend is configured exclusively via **environment variables**.
+The table below includes all configurable values:
 
 | Variable                    | Description                                                                                                    |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -161,8 +161,8 @@ The table below includes all configurable values:
 
 # 🆙 Running Locally
 
-The server can be started locally with `go run main.go` but will crash unless 
-the environment variable `DATABASE_URL` points to an active database with the 
+The server can be started locally with `go run main.go` but will crash unless
+the environment variable `DATABASE_URL` points to an active database with the
 schema applied.
 
 <br>
