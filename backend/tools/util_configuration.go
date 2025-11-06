@@ -71,7 +71,7 @@ var (
 	HTTP_ADDRESS                = EnvString("HTTP_ADDRESS", "localhost:8080")
 	HTTP_COOKIE_DOMAIN          = EnvString("HTTP_COOKIE_DOMAIN", "")
 	HTTP_COOKIE_NAME            = EnvString("HTTP_COOKIE_NAME", "session")
-	HTTP_CORS_ORIGINS           = EnvSlice("HTTP_CORS_ORIGINS", ",", []string{"http://localhost:8080"})
+	HTTP_CORS_ORIGINS           = EnvSlice("HTTP_CORS_ORIGINS", ",", []string{"http://localhost:5173"})
 	HTTP_IP_HEADERS             = EnvSlice("HTTP_IP_HEADERS", ",", []string{"X-Forwarded-By"})
 	HTTP_IP_PROXIES             = EnvSlice("HTTP_IP_PROXIES", ",", []string{"127.0.0.1/8"})
 	HTTP_KEY                    = []byte(EnvString("HTTP_KEY", "teto"))

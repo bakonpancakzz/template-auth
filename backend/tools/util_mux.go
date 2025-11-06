@@ -4,17 +4,9 @@ import "net/http"
 
 type MiddlewareFunc func(w http.ResponseWriter, r *http.Request) bool
 
+// Apply Middleware before Processing Request
 func Chain(h http.HandlerFunc, mw ...MiddlewareFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		// global middleware injection :)
-		if !UseServer(w, r) {
-			return
-		}
-		if !UseCORS(w, r) {
-			return
-		}
-
 		for i := 0; i < len(mw); i++ {
 			if !mw[i](w, r) {
 				return
@@ -27,6 +19,15 @@ func Chain(h http.HandlerFunc, mw ...MiddlewareFunc) http.HandlerFunc {
 type MethodHandler map[string]http.HandlerFunc
 
 func (mh MethodHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	// Middleware Injection :3
+	if !UseServer(w, r) {
+		return
+	}
+	if !UseCORS(w, r) {
+		return
+	}
+
 	if handler, ok := mh[r.Method]; ok {
 		handler(w, r)
 	} else {
