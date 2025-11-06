@@ -63,9 +63,9 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 	// Validate Application Secret
 	var application tools.DatabaseApplication
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			id, auth_secret 
-		FROM auth.applications 
+		`SELECT
+			id, auth_secret
+		FROM auth.applications
 		WHERE id = $1`,
 		clientID,
 	).Scan(
@@ -92,7 +92,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 		// Consume Auth Grant
 		var grant tools.DatabaseGrant
 		err := tools.Database.QueryRow(ctx,
-			`DELETE FROM auth.grants 
+			`DELETE FROM auth.grants
 			WHERE code = $1 AND expires > NOW()
 			RETURNING user_id, application_id, redirect_uri, scopes`,
 			Body.Code,
@@ -120,7 +120,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 		var tokenAccess, tokenRefresh string
 		var connection tools.DatabaseConnection
 		switch tools.Database.QueryRow(ctx,
-			`SELECT token_expires FROM auth.connections 
+			`SELECT token_expires FROM auth.connections
 			WHERE application_id = $1 AND user_id = $2`,
 			grant.ApplicationID,
 			grant.UserID,
@@ -148,26 +148,30 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 
 		// Reset Existing Connection
 		case nil:
-			editor := tools.QueryBuilder{
-				Query:  "UPDATE auth.connections SET %s WHERE user_id = $1 AND application_id = $2",
-				Values: []any{grant.UserID, grant.ApplicationID},
-			}
-			editor.AddClause("revoked", false)
-			editor.AddClause("scopes", grant.Scopes)
+			tag, err := tools.Database.Exec(ctx,
+				`UPDATE auth.connections SET
+						updated			= CURRENT_TIMESTAMP,
+						revoked 		= FALSE,
+						scopes  		= $1,
+						token_access 	= $2,
+						token_refresh   = $3,
+						token_expires	= $4
+					WHERE user_id = $5
+					AND application_id = $6`,
 
-			// Refresh Token (If Expired)
-			if time.Now().After(connection.TokenExpires) {
-				tokenAccess = tools.GenerateSignedString()
-				tokenRefresh = tools.GenerateSignedString()
-				editor.AddClause("updated", time.Now())
-				editor.AddClause("token_access", tokenAccess)
-				editor.AddClause("token_expires", time.Now().Add(tools.LIFETIME_OAUTH2_ACCESS_TOKEN))
-				editor.AddClause("token_refresh", tokenRefresh)
-			}
-
-			// Update Connection
-			if _, err := tools.Database.Exec(ctx, editor.Build(), editor.Values...); err != nil {
+				grant.Scopes,
+				tokenAccess,
+				tokenRefresh,
+				time.Now().Add(tools.LIFETIME_OAUTH2_ACCESS_TOKEN),
+				grant.UserID,
+				grant.ApplicationID,
+			)
+			if err != nil {
 				tools.SendServerError(w, r, err)
+				return
+			}
+			if tag.RowsAffected() == 0 {
+				tools.SendClientError(w, r, tools.ERROR_UNKNOWN_CONNECTION)
 				return
 			}
 
@@ -192,7 +196,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 		var connection tools.DatabaseConnection
 		err = tools.Database.QueryRow(ctx,
 			`SELECT id, revoked, scopes
-			FROM auth.connections 
+			FROM auth.connections
 			WHERE token_refresh = $1
 			AND application_id 	= $2`,
 			Body.RefreshToken,
