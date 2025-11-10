@@ -30,11 +30,13 @@ func SetupRatelimitProvider(stop context.Context, await *sync.WaitGroup) {
 		Ratelimit = &ratelimitProviderRedis{}
 	case "local":
 		Ratelimit = &ratelimitProviderLocal{}
+	case "none":
+		Ratelimit = &rateLimitProviderNone{}
 	case "test":
 		if !testing.Testing() {
 			LoggerStorage.Fatal("Attempt to use testing provider outside of testing", nil)
 		}
-		Ratelimit = &ratelimitProviderLocal{}
+		Ratelimit = &rateLimitProviderNone{}
 	default:
 		LoggerRatelimit.Fatal("Unknown Provider", RATELIMIT_PROVIDER)
 	}
