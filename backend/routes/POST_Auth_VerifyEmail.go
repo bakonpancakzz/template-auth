@@ -19,9 +19,9 @@ func POST_Auth_VerifyEmail(w http.ResponseWriter, r *http.Request) {
 
 	// Update Account matching Given Token
 	tag, err := tools.Database.Exec(ctx,
-		`UPDATE auth.users SET 
+		`UPDATE auth.users SET
 			updated 		 = CURRENT_TIMESTAMP,
-			email_verified   = TRUE, 
+			email_verified   = TRUE,
 			token_verify 	 = NULL,
 			token_verify_eat = NULL
 		WHERE token_verify = $1 AND token_verify_eat > NOW()`,

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -72,7 +73,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 		&application.ID,
 		&application.AuthSecret,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 		return
 	}
@@ -102,7 +103,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 			&grant.RedirectURI,
 			&grant.Scopes,
 		)
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 			return
 		}
@@ -119,21 +120,26 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 		// Fetch Relevant Connection
 		var tokenAccess, tokenRefresh string
 		var connection tools.DatabaseConnection
-		switch tools.Database.QueryRow(ctx,
-			`SELECT token_expires FROM auth.connections
-			WHERE application_id = $1 AND user_id = $2`,
+		err = tools.Database.QueryRow(ctx,
+			`SELECT
+				token_expires
+			FROM auth.connections
+			WHERE application_id = $1
+			AND user_id = $2`,
 			grant.ApplicationID,
 			grant.UserID,
-		).Scan(&connection.TokenExpires) {
+		).Scan(&connection.TokenExpires)
 
+		switch {
 		// Create New Connection
-		case pgx.ErrNoRows:
+		case errors.Is(err, pgx.ErrNoRows):
 			tokenAccess = tools.GenerateSignedString()
 			tokenRefresh = tools.GenerateSignedString()
-			if _, err := tools.Database.Exec(ctx,
-				`INSERT INTO auth.connections
-				(id, user_id, application_id, scopes, token_access, token_expires, token_refresh)
-				VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			_, err := tools.Database.Exec(ctx,
+				`INSERT INTO auth.connections (
+					id, user_id, application_id, scopes, token_access,
+					token_expires, token_refresh
+				) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 				tools.GenerateSnowflake(),
 				grant.UserID,
 				grant.ApplicationID,
@@ -141,24 +147,24 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 				tokenAccess,
 				time.Now().Add(tools.LIFETIME_OAUTH2_ACCESS_TOKEN),
 				tokenRefresh,
-			); err != nil {
+			)
+			if err != nil {
 				tools.SendServerError(w, r, err)
 				return
 			}
 
 		// Reset Existing Connection
-		case nil:
+		case err == nil:
 			tag, err := tools.Database.Exec(ctx,
 				`UPDATE auth.connections SET
-						updated			= CURRENT_TIMESTAMP,
-						revoked 		= FALSE,
-						scopes  		= $1,
-						token_access 	= $2,
-						token_refresh   = $3,
-						token_expires	= $4
-					WHERE user_id = $5
-					AND application_id = $6`,
-
+					updated			= CURRENT_TIMESTAMP,
+					revoked 		= FALSE,
+					scopes  		= $1,
+					token_access 	= $2,
+					token_refresh   = $3,
+					token_expires	= $4
+				WHERE user_id = $5
+				AND application_id = $6`,
 				grant.Scopes,
 				tokenAccess,
 				tokenRefresh,
@@ -175,14 +181,14 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-		// Database Error
+		// Unknown Error
 		default:
 			tools.SendServerError(w, r, err)
 			return
 		}
 
 		// Organize Grant
-		tools.SendJSON(w, r, map[string]any{
+		tools.SendJSON(w, r, http.StatusOK, map[string]any{
 			"token_type":    tools.TOKEN_PREFIX_BEARER,
 			"access_token":  tokenAccess,
 			"refresh_token": tokenRefresh,
@@ -195,7 +201,8 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 		// Search for Relevant Connection
 		var connection tools.DatabaseConnection
 		err = tools.Database.QueryRow(ctx,
-			`SELECT id, revoked, scopes
+			`SELECT
+				id, revoked, scopes
 			FROM auth.connections
 			WHERE token_refresh = $1
 			AND application_id 	= $2`,
@@ -206,7 +213,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 			&connection.Scopes,
 			&connection.Revoked,
 		)
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			tools.SendClientError(w, r, tools.ERROR_GENERIC_UNAUTHORIZED)
 			return
 		}
@@ -244,7 +251,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Organize Connection
-		tools.SendJSON(w, r, map[string]any{
+		tools.SendJSON(w, r, http.StatusOK, map[string]any{
 			"token_type":    tools.TOKEN_PREFIX_BEARER,
 			"access_token":  tokenAccess,
 			"refresh_token": tokenRefresh,

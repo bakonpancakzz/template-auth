@@ -24,8 +24,8 @@ func POST_Auth_Signup(w http.ResponseWriter, r *http.Request) {
 	var usageEmail int
 	var usageUsername int
 	if err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			(SELECT COUNT(*) FROM auth.profiles WHERE username = $1),
+		`SELECT
+			(SELECT COUNT(*) FROM auth.profiles WHERE username = LOWER($1)),
 			(SELECT COUNT(*) FROM auth.users WHERE email_address = LOWER($2))`,
 		Body.Username,
 		Body.Email,
@@ -45,7 +45,8 @@ func POST_Auth_Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hash Password
+	// Generate Account Fields
+	userID := tools.GenerateSnowflake()
 	userVerifyEmail := tools.GenerateSignedString()
 	userPasswordHash, err := tools.GeneratePasswordHash(Body.Password)
 	if err != nil {
@@ -53,26 +54,46 @@ func POST_Auth_Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create New Account and Profile
-	if _, err := tools.Database.Exec(ctx,
-		`BEGIN;
-			INSERT INTO auth.users (
-				id, email_address, token_verify, token_verify_eat,
-				password_hash, password_history, ip_address
-			) VALUES ($1, LOWER($2), $3, $4, $5, $6, $7);
-			INSERT INTO auth.profiles (
-				id, username, displayname
-			) VALUES ($1, $8, $8);
-		COMMIT;`,
-		tools.GenerateSnowflake(),
+	// [TX] Begin Transaction
+	tx, err := tools.Database.Begin(ctx)
+	if err != nil {
+		tools.SendServerError(w, r, err)
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	// [TX] Create New Account
+	if _, err := tx.Exec(ctx,
+		`INSERT INTO auth.users (
+			id, email_address, token_verify, token_verify_eat,
+			password_hash, password_history, ip_address
+		) VALUES ($1, LOWER($2), $3, $4, $5, $6, $7);`,
+		userID,
 		Body.Email,
 		userVerifyEmail,
 		time.Now().Add(tools.LIFETIME_TOKEN_EMAIL_VERIFY),
 		userPasswordHash,
 		[]string{userPasswordHash},
 		tools.GetRemoteIP(r),
+	); err != nil {
+		tools.SendServerError(w, r, err)
+		return
+	}
+
+	// [TX] Create New Profile
+	if _, err := tx.Exec(ctx,
+		`INSERT INTO auth.profiles (
+			id, username, displayname
+		) VALUES ($1, LOWER($2), $2);`,
+		userID,
 		Body.Username,
 	); err != nil {
+		tools.SendServerError(w, r, err)
+		return
+	}
+
+	// [TX] Complete Transaction
+	if err := tx.Commit(ctx); err != nil {
 		tools.SendServerError(w, r, err)
 		return
 	}

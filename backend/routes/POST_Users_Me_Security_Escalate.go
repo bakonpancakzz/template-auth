@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -29,9 +30,9 @@ func POST_Users_Me_Security_Escalate(w http.ResponseWriter, r *http.Request) {
 	// Fetch Account with MFA Fields
 	var user tools.DatabaseUser
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			email_address, email_verified, mfa_enabled, 
-			mfa_secret, mfa_codes, mfa_codes_used, 
+		`SELECT
+			email_address, email_verified, mfa_enabled,
+			mfa_secret, mfa_codes, mfa_codes_used,
 			password_hash, token_passcode, token_passcode_eat
 		FROM auth.users WHERE id = $1`,
 		session.UserID,
@@ -46,7 +47,7 @@ func POST_Users_Me_Security_Escalate(w http.ResponseWriter, r *http.Request) {
 		&user.TokenPasscode,
 		&user.TokenPasscodeEAT,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	}
@@ -81,8 +82,8 @@ func POST_Users_Me_Security_Escalate(w http.ResponseWriter, r *http.Request) {
 					}
 					// Mark Recovery Code as Used
 					if _, err := tools.Database.Exec(ctx,
-						"UPDATE auth.users SET mfa_codes_used = $1 WHERE id = $2",
-						user.MFACodesUsed|(1<<i),
+						"UPDATE auth.users SET mfa_codes_used = mfa_codes_used | $1 WHERE id = $2",
+						(1 << i),
 						session.UserID,
 					); err != nil {
 						tools.SendServerError(w, r, err)
@@ -110,7 +111,7 @@ func POST_Users_Me_Security_Escalate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-	} else if user.EmailVerified {
+	} else if tools.EMAIL_PROVIDER != "none" && user.EmailVerified {
 
 		// Method: Email Verification
 		// User must attempt to prove ownership by entering a passcode sent to
@@ -127,9 +128,9 @@ func POST_Users_Me_Security_Escalate(w http.ResponseWriter, r *http.Request) {
 			passcode := tools.GeneratePasscode()
 			passcodeExpiration := time.Now().Add(tools.LIFETIME_TOKEN_EMAIL_PASSCODE)
 			if _, err = tools.Database.Exec(ctx,
-				`UPDATE auth.users SET 
-					updated 		   = CURRENT_TIMESTAMP, 
-					token_passcode 	   = $1, 
+				`UPDATE auth.users SET
+					updated 		   = CURRENT_TIMESTAMP,
+					token_passcode 	   = $1,
 					token_passcode_eat = $2
 				WHERE id = $3`,
 				passcode,
@@ -205,7 +206,7 @@ func POST_Users_Me_Security_Escalate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Organize Session
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"elevate_until": elevatedUntil.Unix(),
 	})
 }

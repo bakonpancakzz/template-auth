@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -42,7 +43,7 @@ func POST_OAuth2_Token_Revoke(w http.ResponseWriter, r *http.Request) {
 		&application.ID,
 		&application.AuthSecret,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 		return
 	}
@@ -58,10 +59,11 @@ func POST_OAuth2_Token_Revoke(w http.ResponseWriter, r *http.Request) {
 
 	// Mark Relevant Connection as Revoked
 	tag, err := tools.Database.Exec(ctx,
-		`UPDATE auth.connections SET 
+		`UPDATE auth.connections SET
 			updated = CURRENT_TIMESTAMP,
-			revoked = true
-		WHERE (token_access = $1 OR token_refresh = $1) 
+			revoked = TRUE,
+			scopes	= 0
+		WHERE (token_access = $1 OR token_refresh = $1)
 		AND application_id = $2
 		AND revoked = false`,
 		Body.Token,

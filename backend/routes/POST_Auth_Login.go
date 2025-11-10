@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -26,8 +27,8 @@ func POST_Auth_Login(w http.ResponseWriter, r *http.Request) {
 	// Find Relevant Account
 	var user tools.DatabaseUser
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			id, email_address, email_verified, ip_address, mfa_enabled, 
+		`SELECT
+			id, email_address, email_verified, ip_address, mfa_enabled,
 			mfa_secret, mfa_codes, mfa_codes_used, password_hash
 		FROM auth.users
 		WHERE email_address = LOWER($1)`,
@@ -43,7 +44,7 @@ func POST_Auth_Login(w http.ResponseWriter, r *http.Request) {
 		&user.MFACodesUsed,
 		&user.PasswordHash,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_LOGIN_INCORRECT)
 		return
 	}
@@ -95,8 +96,8 @@ func POST_Auth_Login(w http.ResponseWriter, r *http.Request) {
 					}
 					// Mark Recovery Code as Used
 					if _, err := tools.Database.Exec(ctx,
-						"UPDATE auth.users SET mfa_codes_used = $1 WHERE id = $2",
-						user.MFACodesUsed|(1<<i),
+						"UPDATE auth.users SET mfa_codes_used = mfa_codes_used | $1 WHERE id = $2",
+						(1 << i),
 						user.ID,
 					); err != nil {
 						tools.SendServerError(w, r, err)
@@ -135,14 +136,15 @@ func POST_Auth_Login(w http.ResponseWriter, r *http.Request) {
 		loginToken := tools.GenerateSignedString()
 		tag, err := tools.Database.Exec(ctx,
 			`UPDATE auth.users SET
-				updated = CURRENT_TIMESTAMP,
-				token_login 		= $1,
-				token_login_data 	= $2,
-				token_login_eat 	= $3
+				updated 		 = CURRENT_TIMESTAMP,
+				token_login 	 = $1,
+				token_login_data = $2,
+				token_login_eat  = $3
 			WHERE id = $4`,
 			loginToken,
 			sessionAddress,
 			time.Now().Add(tools.LIFETIME_TOKEN_EMAIL_LOGIN),
+			user.ID,
 		)
 		if err != nil {
 			tools.SendServerError(w, r, err)
@@ -204,9 +206,10 @@ func POST_Auth_Login(w http.ResponseWriter, r *http.Request) {
 
 	// Create New Session
 	_, err = tools.Database.Exec(ctx,
-		`INSERT INTO auth.sessions 
-			(created, user_id, token, device_ip_address, device_user_agent) 
-		VALUES ($1, $2, $3, $4, $5);`,
+		`INSERT INTO auth.sessions (
+			id, created, user_id, token, device_ip_address, device_user_agent
+		) VALUES ($1, $2, $3, $4, $5, $6);`,
+		tools.GenerateSnowflake(),
 		sessionCreated,
 		user.ID,
 		sessionToken,
@@ -249,7 +252,7 @@ func POST_Auth_Login(w http.ResponseWriter, r *http.Request) {
 		Path:     "",
 		Domain:   tools.HTTP_COOKIE_DOMAIN,
 		MaxAge:   int(tools.LIFETIME_TOKEN_USER_COOKIE),
-		Secure:   tools.PRODUCTION,
+		Secure:   tools.HTTP_COOKIE_SECURE,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})

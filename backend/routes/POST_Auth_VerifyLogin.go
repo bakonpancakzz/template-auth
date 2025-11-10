@@ -19,13 +19,13 @@ func POST_Auth_VerifyLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Update Account matching Given Token
 	tag, err := tools.Database.Exec(ctx,
-		`UPDATE auth.users SET 
+		`UPDATE auth.users SET
 			updated 		 = CURRENT_TIMESTAMP,
 			ip_address 		 = token_login_data,
 			token_login 	 = NULL,
 			token_login_data = NULL,
 			token_login_eat  = NULL
-		WHERE token_verify = $1 AND token_login_eat > NOW()`,
+		WHERE token_login = $1 AND token_login_eat > NOW()`,
 		Body.Token,
 	)
 	if err != nil {
