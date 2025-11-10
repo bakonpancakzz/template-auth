@@ -31,11 +31,12 @@ func GenerateTOTPURI(issuer, username, secret string) string {
 }
 
 // Generate 6-digit TOTP Code for the Given Time
-func GenerateTOTPCode(secret string, at time.Time) (string, error) {
+func GenerateTOTPCode(secret string, at time.Time) string {
+
 	// Decode Secret
 	key, err := base32.StdEncoding.WithPadding(base32.StdPadding).DecodeString(secret)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
 	// Generate Hash
@@ -50,7 +51,7 @@ func GenerateTOTPCode(secret string, at time.Time) (string, error) {
 	// Hash Truncation
 	offset := sum[len(sum)-1] & 0x0F
 	code := (int(sum[offset])&0x7F)<<24 | (int(sum[offset+1])&0xFF)<<16 | (int(sum[offset+2])&0xFF)<<8 | (int(sum[offset+3]) & 0xFF)
-	return fmt.Sprintf("%06d", code%1000000), nil
+	return fmt.Sprintf("%06d", code%1000000)
 }
 
 // Checks a 6-digit TOTP Code against the Secret
@@ -58,11 +59,8 @@ func ValidateTOTPCode(code, secret string) bool {
 	now := time.Now()
 	for i := -1; i <= 1; i++ {
 		timestep := now.Add(time.Duration(i*30) * time.Second)
-		expected, err := GenerateTOTPCode(secret, timestep)
-		if err != nil {
-			return false
-		}
-		if code == expected {
+		expected := GenerateTOTPCode(secret, timestep)
+		if CompareStringConstant(code, expected) {
 			return true
 		}
 	}

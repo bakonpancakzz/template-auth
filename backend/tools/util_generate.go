@@ -2,11 +2,13 @@ package tools
 
 import (
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -25,9 +27,9 @@ func GeneratePasscode() string {
 func GenerateRecoveryCodes() []string {
 	codes := make([]string, 6)
 	for i := range codes {
-		b := make([]byte, MFA_RECOVERY_LENGTH/2)
+		b := make([]byte, 4)
 		rand.Read(b)
-		codes[i] = fmt.Sprintf("%x", b)
+		codes[i] = fmt.Sprintf("%X", b)
 	}
 	return codes
 }
@@ -93,7 +95,7 @@ func ComparePasswordHash(givenHash, givenPassword string) (bool, error) {
 		[]byte(givenHash),
 		[]byte(givenPassword),
 	)
-	if err == bcrypt.ErrMismatchedHashAndPassword {
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		return false, nil
 	}
 	if err != nil {
@@ -104,5 +106,10 @@ func ComparePasswordHash(givenHash, givenPassword string) (bool, error) {
 
 // Compare two strings in constant time to prevent leaking of sensitive info
 func CompareStringConstant(a, b string) bool {
-	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) != 1
+	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
+}
+
+// Generate Standard Hash for an Image
+func GenerateImageHash(image []byte) string {
+	return fmt.Sprintf("%x", md5.Sum(image))
 }
