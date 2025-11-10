@@ -3,7 +3,9 @@ package tools
 import (
 	"compress/gzip"
 	"encoding/json"
+	"io"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -25,17 +27,20 @@ func ValidateBody(w http.ResponseWriter, r *http.Request, b any) bool {
 
 // Decode and Validate Incoming JSON Request
 func ValidateJSON(w http.ResponseWriter, r *http.Request, b any) bool {
-	defer r.Body.Close()
-	if !strings.Contains(r.Header.Get("Content-Type"), "application/json") {
-		SendClientError(w, r, ERROR_BODY_MALFORMED)
+
+	// Validate Content Type Header
+	header := strings.ToLower(r.Header.Get("Content-Type"))
+	if !strings.HasPrefix(header, "application/json") {
+		SendClientError(w, r, ERROR_BODY_INVALID_TYPE)
 		return false
 	}
+	defer r.Body.Close()
 
 	// Incoming Decoder
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(b); err != nil {
-		SendClientError(w, r, ERROR_BODY_MALFORMED)
+		SendClientError(w, r, ERROR_BODY_INVALID_DATA)
 		return false
 	}
 
@@ -44,14 +49,46 @@ func ValidateJSON(w http.ResponseWriter, r *http.Request, b any) bool {
 
 // Decode and Validate Incoming Query Parameters
 func ValidateQuery(w http.ResponseWriter, r *http.Request, b any) bool {
-	defer r.Body.Close()
-	if !strings.Contains(r.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
-		SendClientError(w, r, ERROR_BODY_MALFORMED)
+
+	// Read Incoming Field
+	var query url.Values
+	switch r.Method {
+
+	// Read Query String from URI
+	case http.MethodGet:
+		query = r.URL.Query()
+
+	// Read Query String from Body
+	case http.MethodPost, http.MethodPatch, http.MethodPut, http.MethodDelete:
+
+		// Validate Content Type Header
+		header := strings.ToLower(r.Header.Get("Content-Type"))
+		if !strings.HasPrefix(header, "application/x-www-form-urlencoded") {
+			SendClientError(w, r, ERROR_BODY_INVALID_TYPE)
+			return false
+		}
+		defer r.Body.Close()
+
+		// Read and Parse Incoming Query Body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			SendClientError(w, r, ERROR_BODY_INVALID_DATA)
+			return false
+		}
+		values, err := url.ParseQuery(string(body))
+		if err != nil {
+			SendClientError(w, r, ERROR_BODY_INVALID_DATA)
+			return false
+		}
+		query = values
+
+	// Other request methods should not contain a body
+	default:
+		SendClientError(w, r, ERROR_BODY_INVALID_TYPE)
 		return false
 	}
 
 	// Fill struct using Query values
-	query := r.URL.Query()
 	ptrValue := reflect.ValueOf(b)
 	if ptrValue.Kind() != reflect.Ptr || ptrValue.IsNil() {
 		panic("destination must be a non-nil pointer")
@@ -91,21 +128,21 @@ func ValidateQuery(w http.ResponseWriter, r *http.Request, b any) bool {
 }
 
 // Encode and Compress Outgoing Body
-func SendJSON(w http.ResponseWriter, r *http.Request, b any) error {
-
+func SendJSON(w http.ResponseWriter, r *http.Request, s int, b any) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
+	// Setup Compression
+	var wr io.Writer = w
 	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		w.Header().Set("Content-Encoding", "gzip")
-		z := gzip.NewWriter(w)
-		defer z.Close()
-
-		e := json.NewEncoder(z)
-		e.SetEscapeHTML(false)
-		return e.Encode(b)
-	} else {
-		e := json.NewEncoder(w)
-		e.SetEscapeHTML(false)
-		return e.Encode(b)
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+		wr = gz
 	}
+	w.WriteHeader(s)
+
+	// Encode Content
+	enc := json.NewEncoder(wr)
+	enc.SetEscapeHTML(false)
+	return enc.Encode(b)
 }

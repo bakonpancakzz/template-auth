@@ -18,10 +18,11 @@ var (
 	ERROR_GENERIC_RATELIMIT                 = APIError{Status: 429, Code: 0, Message: "Too Many Requests"}
 	ERROR_GENERIC_UNAUTHORIZED              = APIError{Status: 401, Code: 0, Message: "Unauthorized"}
 	ERROR_GENERIC_METHOD_NOT_ALLOWED        = APIError{Status: 405, Code: 0, Message: "Method Not Allowed"}
-	ERROR_BODY_EMPTY                        = APIError{Status: 400, Code: 0, Message: "Empty Form Body"}
-	ERROR_BODY_MALFORMED                    = APIError{Status: 422, Code: 0, Message: "Malformed Form Body"}
-	ERROR_BODY_INVALID                      = APIError{Status: 400, Code: 0, Message: "Invalid Form Body"}
-	ERROR_BODY_TOO_LARGE                    = APIError{Status: 413, Code: 0, Message: "Payload Too Large"}
+	ERROR_BODY_EMPTY                        = APIError{Status: 411, Code: 0, Message: "Request Body is Empty"}
+	ERROR_BODY_TOO_LARGE                    = APIError{Status: 413, Code: 0, Message: "Request Body is Too Large"}
+	ERROR_BODY_INVALID_TYPE                 = APIError{Status: 400, Code: 0, Message: "Invalid Body Type"}
+	ERROR_BODY_INVALID_DATA                 = APIError{Status: 422, Code: 0, Message: "Invalid Body"}
+	ERROR_BODY_INVALID_FIELD                = APIError{Status: 400, Code: 0, Message: "Invalid Body Field"}
 	ERROR_UNKNOWN_USER                      = APIError{Status: 404, Code: 1020, Message: "Unknown User"}
 	ERROR_UNKNOWN_TOKEN                     = APIError{Status: 404, Code: 1030, Message: "Unknown Token"}
 	ERROR_UNKNOWN_SESSION                   = APIError{Status: 404, Code: 1040, Message: "Unknown Session"}
@@ -62,9 +63,18 @@ var (
 
 // Cancel Request and Respond with an API Error
 func SendClientError(w http.ResponseWriter, r *http.Request, e APIError) {
-	w.WriteHeader(e.Status)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(e.Status)
 	fmt.Fprintf(w, `{"code":%d,"message":%q}`, e.Code, e.Message)
+}
+
+// Cancel Request and Respond with a Validation Error
+func SendFormError(w http.ResponseWriter, r *http.Request, verrs ...ValidationError) {
+	SendJSON(w, r, ERROR_BODY_INVALID_FIELD.Status, map[string]any{
+		"code":    ERROR_BODY_INVALID_FIELD.Code,
+		"message": ERROR_BODY_INVALID_FIELD.Message,
+		"errors":  verrs,
+	})
 }
 
 // Cancel Request and Respond with a Generic Server Error
@@ -78,14 +88,4 @@ func SendServerError(w http.ResponseWriter, r *http.Request, err error) {
 		"error":   err,
 	})
 	SendClientError(w, r, ERROR_GENERIC_SERVER)
-}
-
-// Cancel Request and Respond with a Validation Error
-func SendFormError(w http.ResponseWriter, r *http.Request, verrs ...ValidationError) {
-	w.WriteHeader(ERROR_BODY_INVALID.Status)
-	SendJSON(w, r, map[string]any{
-		"code":    ERROR_BODY_INVALID.Code,
-		"message": ERROR_BODY_INVALID.Message,
-		"errors":  verrs,
-	})
 }
