@@ -23,9 +23,9 @@ func GET_Users_Me_Security_MFA_Codes(w http.ResponseWriter, r *http.Request) {
 	// Fetch State for Current User
 	var user tools.DatabaseUser
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			mfa_enabled, mfa_codes 
-		FROM auth.users 
+		`SELECT
+			mfa_enabled, mfa_codes
+		FROM auth.users
 		WHERE id = $1`,
 		session.UserID,
 	).Scan(
@@ -42,7 +42,7 @@ func GET_Users_Me_Security_MFA_Codes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Organize Account
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"recovery_codes": user.MFACodes,
 	})
 }

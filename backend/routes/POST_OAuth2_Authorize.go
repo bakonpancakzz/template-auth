@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -51,7 +52,7 @@ func POST_OAuth2_Authorize(w http.ResponseWriter, r *http.Request) {
 		&application.ID,
 		&application.AuthRedirects,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 		return
 	}

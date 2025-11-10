@@ -18,9 +18,9 @@ func POST_Auth_Logout(w http.ResponseWriter, r *http.Request) {
 
 	// Revoke Current Session
 	rows, err := tools.Database.Exec(ctx, `
-		UPDATE auth.sessions SET 
-			updated = CURRENT_TIMESTAMP, 
-			revoked = true
+		UPDATE auth.sessions SET
+			updated = CURRENT_TIMESTAMP,
+			revoked = TRUE
 		WHERE id = $1 AND user_id = $2`,
 		session.SessionID,
 		session.UserID,
@@ -41,7 +41,7 @@ func POST_Auth_Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Domain:   tools.HTTP_COOKIE_DOMAIN,
 		MaxAge:   -1,
-		Secure:   tools.PRODUCTION,
+		Secure:   tools.HTTP_COOKIE_SECURE,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})

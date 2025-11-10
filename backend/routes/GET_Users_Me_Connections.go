@@ -18,7 +18,7 @@ func GET_Users_Me_Connections(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch Account Connections
 	rows, err := tools.Database.Query(ctx,
-		`SELECT 
+		`SELECT
 			c.id, c.created, c.scopes,
 			a.id, a.created, a.name, a.description, a.icon_hash
 		FROM auth.connections c
@@ -63,5 +63,5 @@ func GET_Users_Me_Connections(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 	}
-	tools.SendJSON(w, r, results)
+	tools.SendJSON(w, r, http.StatusOK, results)
 }

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -61,7 +62,7 @@ func PATCH_Users_Me_Security_Email(w http.ResponseWriter, r *http.Request) {
 		time.Now().Add(tools.LIFETIME_TOKEN_EMAIL_VERIFY),
 		session.UserID,
 	).Scan(&userEmailPrevious)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	}

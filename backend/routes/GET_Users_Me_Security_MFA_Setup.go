@@ -25,7 +25,7 @@ func GET_Users_Me_Security_MFA_Setup(w http.ResponseWriter, r *http.Request) {
 	var user tools.DatabaseUser
 	var profile tools.DatabaseProfile
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
+		`SELECT
 			u.email_address, u.mfa_enabled, p.username
 		FROM auth.users u
 		JOIN auth.profiles p ON u.id = p.id
@@ -55,11 +55,11 @@ func GET_Users_Me_Security_MFA_Setup(w http.ResponseWriter, r *http.Request) {
 
 	// Update State for Current User
 	if _, err = tools.Database.Exec(ctx,
-		`UPDATE auth.users SET 
+		`UPDATE auth.users SET
 			updated 		= CURRENT_TIMESTAMP,
-			mfa_enabled 	= false, 
-			mfa_secret 		= $2, 
-			mfa_codes 		= $3, 
+			mfa_enabled 	= false,
+			mfa_secret 		= $2,
+			mfa_codes 		= $3,
 			mfa_codes_used 	= 0
 		WHERE id = $1`,
 		session.UserID,
@@ -71,7 +71,7 @@ func GET_Users_Me_Security_MFA_Setup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Organize Setup
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"recovery_codes": setupCodes,
 		"secret":         setupSecret,
 		"uri":            setupURI,

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/bakonpancakz/template-auth/tools"
@@ -22,9 +23,9 @@ func GET_Users_Me(w http.ResponseWriter, r *http.Request) {
 	var user tools.DatabaseUser
 	var profile tools.DatabaseProfile
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
+		`SELECT
 			u.id, u.created, u.email_address, u.email_verified, u.mfa_enabled,
-			p.username, p.displayname, p.biography, p.subtitle, p.avatar_hash, 
+			p.username, p.displayname, p.biography, p.subtitle, p.avatar_hash,
 			p.banner_hash, p.accent_banner, p.accent_border, p.accent_background
 		FROM auth.users u
 		JOIN auth.profiles p ON u.id = p.id
@@ -35,7 +36,7 @@ func GET_Users_Me(w http.ResponseWriter, r *http.Request) {
 		&profile.Username, &profile.Displayname, &profile.Biography, &profile.Subtitle, &profile.AvatarHash,
 		&profile.BannerHash, &profile.AccentBanner, &profile.AccentBorder, &profile.AccentBackground,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	}
@@ -51,7 +52,7 @@ func GET_Users_Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Organize Account & Profile
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"id":                user.ID,
 		"created":           user.Created,
 		"username":          profile.Username,

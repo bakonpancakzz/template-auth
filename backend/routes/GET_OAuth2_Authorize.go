@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/bakonpancakz/template-auth/tools"
@@ -42,9 +43,9 @@ func GET_OAuth2_Authorize(w http.ResponseWriter, r *http.Request) {
 	// Fetch Relevant Application
 	var application tools.DatabaseApplication
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			id, created, name, icon_hash, auth_redirects 
-		FROM auth.applications 
+		`SELECT
+			id, created, name, icon_hash, auth_redirects
+		FROM auth.applications
 		WHERE id = $1`,
 		Body.ClientID,
 	).Scan(
@@ -54,7 +55,7 @@ func GET_OAuth2_Authorize(w http.ResponseWriter, r *http.Request) {
 		&application.IconHash,
 		&application.AuthRedirects,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 		return
 	}
@@ -79,9 +80,9 @@ func GET_OAuth2_Authorize(w http.ResponseWriter, r *http.Request) {
 	// Fetch Profile for Account
 	var profile tools.DatabaseProfile
 	err = tools.Database.QueryRow(ctx,
-		`SELECT 
-			id, displayname, avatar_hash 
-		FROM auth.profiles 
+		`SELECT
+			id, displayname, avatar_hash
+		FROM auth.profiles
 		WHERE user_id = $1`,
 		session.UserID,
 	).Scan(
@@ -89,7 +90,7 @@ func GET_OAuth2_Authorize(w http.ResponseWriter, r *http.Request) {
 		&profile.Displayname,
 		&profile.AvatarHash,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	}
@@ -99,7 +100,7 @@ func GET_OAuth2_Authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Organize Application and Profile
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"redirect": requestedRedirect,
 		"scopes":   requestedScopes,
 		"state":    Body.State,

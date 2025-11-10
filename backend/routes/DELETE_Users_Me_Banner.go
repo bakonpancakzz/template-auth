@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/bakonpancakz/template-auth/tools"
@@ -20,13 +21,13 @@ func DELETE_Users_Me_Banner(w http.ResponseWriter, r *http.Request) {
 	// Remove Banner from Profile
 	var hash *string
 	err := tools.Database.QueryRow(ctx,
-		`UPDATE auth.profiles SET 
-			banner_hash = NULL 
-		WHERE id = $1 
+		`UPDATE auth.profiles SET
+			banner_hash = NULL
+		WHERE id = $1
 		RETURNING banner_hash`,
 		session.UserID,
 	).Scan(&hash)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	}

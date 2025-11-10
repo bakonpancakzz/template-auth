@@ -22,7 +22,7 @@ func DELETE_Users_Me_Security_MFA_Setup(w http.ResponseWriter, r *http.Request) 
 
 	// Clear Fields for Current User
 	tag, err := tools.Database.Exec(ctx,
-		`UPDATE auth.users SET 
+		`UPDATE auth.users SET
 			updated 		= CURRENT_TIMESTAMP,
 			mfa_enabled 	= false,
 			mfa_secret	 	= NULL,

@@ -29,9 +29,11 @@ func DELETE_Users_Me_Security_Sessions_ID(w http.ResponseWriter, r *http.Request
 
 	// Revoke Relevant Session
 	rows, err := tools.Database.Exec(ctx,
-		`UPDATE auth.sessions SET 
-			revoked = true 
-		WHERE id = $1 AND user_id = $2 AND revoked = false`,
+		`UPDATE auth.sessions SET
+			revoked = TRUE
+		WHERE id = $1
+		AND user_id = $2
+		AND revoked = false`,
 		snowflake,
 		session.UserID,
 	)

@@ -18,9 +18,9 @@ func GET_Users_Me_Applications(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch Applications for Account
 	rows, err := tools.Database.Query(ctx,
-		`SELECT 
+		`SELECT
 			id, created, name, description, icon_hash, redirects
-		FROM auth.applications 
+		FROM auth.applications
 		WHERE user_id = $1`,
 		session.UserID,
 	)
@@ -56,5 +56,5 @@ func GET_Users_Me_Applications(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	tools.SendJSON(w, r, results)
+	tools.SendJSON(w, r, http.StatusOK, results)
 }

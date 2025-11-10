@@ -14,7 +14,7 @@ BEGIN
 		);
     END IF;
 
-    SELECT value::INTEGER INTO _VERSION FROM kvs WHERE key = 'version';	
+    SELECT value::INTEGER INTO _VERSION FROM kvs WHERE key = 'version';
     IF (SELECT _VERSION IS NULL) THEN
         INSERT INTO kvs VALUES ('updated', CURRENT_TIMESTAMP::TEXT);
         INSERT INTO kvs VALUES ('version', 0);
@@ -61,20 +61,20 @@ BEGIN
             token_verify_eat    TIMESTAMP,                                                  -- Verify Email Token Expires At
             token_login         TEXT            UNIQUE,                                     -- New Login Token
             token_login_data    TEXT,                                                       -- New Login Token Arbitrary Data
-            token_login_expires TIMESTAMP,                                                  -- New Login Token Expires At
+            token_login_eat     TIMESTAMP,                                                  -- New Login Token Expires At
             token_reset         TEXT            UNIQUE,                                     -- Password Reset Token
             token_reset_eat     TIMESTAMP,                                                  -- Password Reset Token Expires At
             token_passcode      TEXT,                                                       -- Random Escalation Code
             token_passcode_eat  TIMESTAMP                                                   -- Random Escalation Code Expires At
         );
-        
+
         CREATE TABLE IF NOT EXISTS auth.profiles (
             id                  BIGINT          NOT NULL PRIMARY KEY,                       -- Account ID
             created             TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,         -- Created At
             updated             TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,         -- Updated At
             username            TEXT            NOT NULL UNIQUE,                            -- Username
             displayname         TEXT            NOT NULL,                                   -- Nickname
-            subtitle            TEXT,                                                       -- Pronouns  
+            subtitle            TEXT,                                                       -- Pronouns
             biography           TEXT,                                                       -- Biography
             avatar_hash         TEXT,                                                       -- Avatar Image Hash
             banner_hash         TEXT,                                                       -- Banner Image Hash
@@ -96,7 +96,7 @@ BEGIN
             device_user_agent   TEXT            NOT NULL,                                   -- User Agent of Device
             FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
         );
-        
+
         CREATE TABLE auth.applications (
             id                  BIGINT          NOT NULL PRIMARY KEY,                       -- Application ID
             created             TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,         -- Created At
@@ -159,7 +159,7 @@ BEGIN
      *  Uses the "pg_cron" extension to enable automated maintenance without
      *  requiring the use of an external service, see installation guide here:
      *  https://github.com/citusdata/pg_cron#installing-pg_cron
-     *  
+     *
      *  NOTE: This extension is not required while in development but will cause
      *  issues in production as memory usage will climb indefinitely.
      */
@@ -168,14 +168,14 @@ BEGIN
     ELSE
         CREATE EXTENSION IF NOT EXISTS pg_cron;
         CREATE OR REPLACE PROCEDURE pgx_reschedule (
-            _SCHEDULE 	TEXT, 
-            _NAME 		TEXT, 
+            _SCHEDULE 	TEXT,
+            _NAME 		TEXT,
             _COMMAND 	TEXT
         )
-        LANGUAGE plpgsql SECURITY DEFINER AS $$ 
+        LANGUAGE plpgsql SECURITY DEFINER AS $$
             BEGIN
-                IF EXISTS (SELECT FROM cron.job WHERE jobname = _NAME) THEN 
-                    PERFORM cron.unschedule(_NAME); 
+                IF EXISTS (SELECT FROM cron.job WHERE jobname = _NAME) THEN
+                    PERFORM cron.unschedule(_NAME);
                 END IF;
                 PERFORM cron.schedule(_NAME, _SCHEDULE, _COMMAND);
                 RAISE NOTICE 'Scheduled "%" (%)', _NAME, _SCHEDULE;
@@ -187,17 +187,17 @@ BEGIN
 
     /*
      * GLOBALS
-     *  Use this function to quickly store some variables which can later be 
+     *  Use this function to quickly store some variables which can later be
      *  retreived by your applications. Sensitive information should NOT kept
      *  here as the table is public to all database users.
      */
     CREATE OR REPLACE PROCEDURE pgx_global (
-        _KEY 		TEXT, 
+        _KEY 		TEXT,
         _VALUE 	    TEXT
     )
-    LANGUAGE plpgsql SECURITY DEFINER AS $$ 
+    LANGUAGE plpgsql SECURITY DEFINER AS $$
         BEGIN
-            INSERT INTO kvs (key, value) VALUES (_KEY, _VALUE) 
+            INSERT INTO kvs (key, value) VALUES (_KEY, _VALUE)
             ON CONFLICT (key) DO UPDATE SET value = _VALUE;
             RAISE NOTICE 'Set Variable "%" to "%"', _KEY, _VALUE;
         END;

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -122,15 +123,11 @@ func UseSession(w http.ResponseWriter, r *http.Request) bool {
 	var givenApplication bool
 	var givenToken string
 
-	if cookie, err := r.Cookie(HTTP_COOKIE_NAME); err == nil {
+	cookie, err := r.Cookie(HTTP_COOKIE_NAME)
+	switch {
 
-		// Authenticate as User using Cookie
-		givenApplication = false
-		givenToken = cookie.Value
-
-	} else if err == http.ErrNoCookie {
-
-		// Check Authorization Header
+	// Check Authorization Header
+	case errors.Is(err, http.ErrNoCookie):
 		h := strings.TrimSpace(r.Header.Get("Authorization"))
 		switch {
 		case strings.HasPrefix(h, TOKEN_PREFIX_USER):
@@ -142,14 +139,20 @@ func UseSession(w http.ResponseWriter, r *http.Request) bool {
 			// Authenticate as Application using Header
 			givenApplication = true
 			givenToken = h[len(TOKEN_PREFIX_BEARER):]
+
 		default:
 			// Unsupported Prefix
 			SendClientError(w, r, ERROR_GENERIC_UNAUTHORIZED)
 			return false
 		}
 
-	} else {
-		// Invalid or Malfored Cookie
+	// Authenticate as User using Cookie
+	case err == nil:
+		givenApplication = false
+		givenToken = cookie.Value
+
+		// Invalid or Malformed Cookie
+	default:
 		SendClientError(w, r, ERROR_GENERIC_UNAUTHORIZED)
 		return false
 	}
@@ -165,8 +168,10 @@ func UseSession(w http.ResponseWriter, r *http.Request) bool {
 		var connectionExpires time.Time
 		var connectionRevoked bool
 		err := Database.QueryRow(ctx,
-			`SELECT id, user_id, application_id, revoked, scopes, token_expires 
-			FROM auth.connections WHERE token_access = $1`,
+			`SELECT
+				id, user_id, application_id, revoked, scopes, token_expires
+			FROM auth.connections
+			WHERE token_access = $1`,
 			givenToken,
 		).Scan(
 			&session.ConnectionID,
@@ -176,7 +181,7 @@ func UseSession(w http.ResponseWriter, r *http.Request) bool {
 			&session.ConnectionScopes,
 			&connectionExpires,
 		)
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			SendClientError(w, r, ERROR_GENERIC_UNAUTHORIZED)
 			return false
 		}
@@ -202,14 +207,16 @@ func UseSession(w http.ResponseWriter, r *http.Request) bool {
 		var sessionElevatedUntil int64
 
 		err := Database.QueryRow(ctx,
-			`SELECT id, user_id, revoked, elevated_until 
-			FROM auth.sessions WHERE token = $1`,
+			`SELECT
+				id, user_id, revoked, elevated_until
+			FROM auth.sessions
+			WHERE token = $1`,
 			givenToken,
 		).Scan(
 			&session.SessionID, &session.UserID,
 			&sessionRevoked, &sessionElevatedUntil,
 		)
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			SendClientError(w, r, ERROR_GENERIC_UNAUTHORIZED)
 			return false
 		}

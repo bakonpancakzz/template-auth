@@ -29,9 +29,9 @@ func POST_Users_Me_Applications(w http.ResponseWriter, r *http.Request) {
 	var applicationSecret = tools.GenerateSignedString()
 	var applicationCreated = time.Now()
 	_, err := tools.Database.Exec(ctx,
-		`INSERT INTO auth.applications 
-		(id, created, updated, user_id, name, auth_secret) 
-		VALUES ($1, $2, $2, $3, $4, $5)`,
+		`INSERT INTO auth.applications (
+			id, created, updated, user_id, name, auth_secret
+		) VALUES ($1, $2, $2, $3, $4, $5)`,
 		applicationID,
 		applicationCreated,
 		session.UserID,
@@ -44,7 +44,7 @@ func POST_Users_Me_Applications(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Organize Application
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"id":          applicationID,
 		"created":     applicationCreated,
 		"name":        Body.Name,

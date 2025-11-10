@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -27,17 +28,17 @@ func POST_Auth_ResetPassword(w http.ResponseWriter, r *http.Request) {
 		user              tools.DatabaseUser
 	)
 	err := tools.Database.QueryRow(ctx,
-		`UPDATE auth.users SET 
-			updated 		= CURRENT_TIMESTAMP, 
+		`UPDATE auth.users SET
+			updated 		= CURRENT_TIMESTAMP,
 			token_reset_eat = $1,
-			token_reset 	= $2 
+			token_reset 	= $2
 		WHERE email_address = LOWER($3)
 		RETURNING id, email_address`,
 		resetTokenExpires,
 		resetToken,
 		Body.Email,
 	).Scan(&user.ID, &user.EmailAddress)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}

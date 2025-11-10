@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -26,9 +27,9 @@ func POST_Users_Me_Security_Email(w http.ResponseWriter, r *http.Request) {
 		verifyTokenExpires = time.Now().Add(tools.LIFETIME_TOKEN_EMAIL_VERIFY)
 	)
 	err := tools.Database.QueryRow(ctx,
-		`UPDATE auth.users SET 
-			updated 		 = CURRENT_TIMESTAMP, 
-			token_verify 	 = $1, 
+		`UPDATE auth.users SET
+			updated 		 = CURRENT_TIMESTAMP,
+			token_verify 	 = $1,
 			token_verify_eat = $2
 		WHERE id = $3 AND email_verified = FALSE
 		RETURNING email_address`,
@@ -36,7 +37,7 @@ func POST_Users_Me_Security_Email(w http.ResponseWriter, r *http.Request) {
 		verifyTokenExpires,
 		session.UserID,
 	).Scan(&user)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_MFA_EMAIL_ALREADY_VERIFIED)
 		return
 	}

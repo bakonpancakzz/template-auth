@@ -2,9 +2,7 @@ package tools
 
 import (
 	"bytes"
-	"crypto/md5"
 	"errors"
-	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -69,26 +67,26 @@ func ImagePaths(o imageOptions, id int64, hash string) []string {
 
 // Helper Function that calls ImageProcessor to handle the given image, it aborts the request
 // with the appropriate API Error in case of failure. You should return early if false is returned.
-func ImageHandler(w http.ResponseWriter, r *http.Request, o imageOptions, id int, d []byte) (bool, string) {
+func ImageHandler(w http.ResponseWriter, r *http.Request, o imageOptions, id int64, d []byte) (bool, string) {
 	hash, err := ImageProcessor(o, id, d)
-	if err == ErrImageUnsupported {
+	if errors.Is(err, ErrImageUnsupported) {
 		SendClientError(w, r, ERROR_IMAGE_UNSUPPORTED)
-		return false, ""
+		return false, hash
 	}
-	if err == ErrImageMalformed {
+	if errors.Is(err, ErrImageMalformed) {
 		SendClientError(w, r, ERROR_IMAGE_MALFORMED)
-		return false, ""
+		return false, hash
 	}
 	if err != nil {
 		SendServerError(w, r, err)
-		return false, ""
+		return false, hash
 	}
 	return true, hash
 }
 
 // All-In-One Function that resizes an image into multiple formats and stores them,
 // returning a unique hash intended to be stored in the database.
-func ImageProcessor(o imageOptions, id int, d []byte) (string, error) {
+func ImageProcessor(o imageOptions, id int64, d []byte) (string, error) {
 
 	// Decode Image with the appropriate decoder based on it's starting bytes
 	// https://en.wikipedia.org/wiki/Magic_number_(programming)#Magic_numbers_in_files)
@@ -123,7 +121,7 @@ func ImageProcessor(o imageOptions, id int, d []byte) (string, error) {
 	}
 
 	// Processing and Upload Formats
-	imageHash := fmt.Sprintf("%x", md5.Sum(d))
+	imageHash := GenerateImageHash(d)
 	for _, f := range o.Formats {
 
 		// Calculate Scaled Height and Width
@@ -149,12 +147,12 @@ func ImageProcessor(o imageOptions, id int, d []byte) (string, error) {
 
 		// Encode Image
 		output := bytes.Buffer{}
-		path := path.Join(o.Folder, strconv.Itoa(id), imageHash, f.Name)
+		path := path.Join(o.Folder, strconv.FormatInt(id, 10), imageHash, f.Name)
 		if err := jpeg.Encode(&output, cropped, &jpeg.Options{Quality: 100}); err != nil {
-			return "", err
+			return imageHash, err
 		}
 		if err := Storage.Put(path, "image/jpeg", output.Bytes()); err != nil {
-			return "", err
+			return imageHash, err
 		}
 	}
 

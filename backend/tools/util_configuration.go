@@ -28,17 +28,16 @@ const (
 	PASSWORD_HASH_EFFORT                     = 12                  // Password Hashing Effort
 	PASSWORD_HISTORY_LIMIT                   = 3                   // Password History Length
 	MFA_PASSCODE_LENGTH                      = 6                   // TOTP Passcode String Length (Do Not Change)
-	MFA_RECOVERY_LENGTH                      = 8                   // TOTP Recovery Code Length
+	MFA_RECOVERY_LENGTH                      = 8                   // TOTP Recovery Code Length (Do Not Change)
 	TOKEN_PREFIX_USER                        = "User"
 	TOKEN_PREFIX_BEARER                      = "Bearer"
 	SESSION_KEY                   contextKey = "gloopert"
 )
 
 var (
-	PRODUCTION                  = EnvString("PRODUCTION", "false") != "false"
 	MACHINE_ID                  = EnvString("MACHINE_ID", "0")
 	DATABASE_URL                = EnvString("DATABASE_URL", "postgresql://postgres:password@localhost:5432")
-	DATABASE_TLS_ENABLED        = EnvString("DATABASE_TLS_ENABLED", "false") != "false"
+	DATABASE_TLS_ENABLED        = EnvString("DATABASE_TLS_ENABLED", "false") == "true"
 	DATABASE_TLS_CERT           = EnvString("DATABASE_TLS_CERT", "tls_crt.pem")
 	DATABASE_TLS_KEY            = EnvString("DATABASE_TLS_KEY", "tls_key.pem")
 	DATABASE_TLS_CA             = EnvString("DATABASE_TLS_CA", "tls_ca.pem")
@@ -63,20 +62,21 @@ var (
 	STORAGE_S3_BUCKET           = EnvString("STORAGE_S3_BUCKET", "bucket")
 	RATELIMIT_PROVIDER          = EnvString("RATELIMIT_PROVIDER", "local")
 	RATELIMIT_REDIS_URI         = EnvString("RATELIMIT_REDIS_URI", "redis://localhost:6379")
-	RATELIMIT_REDIS_TLS_ENABLED = EnvString("RATELIMIT_REDIS_TLS_ENABLED", "false") != "false"
+	RATELIMIT_REDIS_TLS_ENABLED = EnvString("RATELIMIT_REDIS_TLS_ENABLED", "false") == "true"
 	RATELIMIT_REDIS_TLS_CERT    = EnvString("RATELIMIT_REDIS_TLS_CERT", "tls_crt.pem")
 	RATELIMIT_REDIS_TLS_KEY     = EnvString("RATELIMIT_REDIS_TLS_KEY", "tls_key.pem")
 	RATELIMIT_REDIS_TLS_CA      = EnvString("RATELIMIT_REDIS_TLS_CA", "tls_ca.pem")
 	LOGGER_PROVIDER             = EnvString("LOGGER_PROVIDER", "console")
 	HTTP_ADDRESS                = EnvString("HTTP_ADDRESS", "localhost:8080")
-	HTTP_COOKIE_DOMAIN          = EnvString("HTTP_COOKIE_DOMAIN", "")
 	HTTP_COOKIE_NAME            = EnvString("HTTP_COOKIE_NAME", "session")
+	HTTP_COOKIE_DOMAIN          = EnvString("HTTP_COOKIE_DOMAIN", "")
+	HTTP_COOKIE_SECURE          = EnvString("HTTP_COOKIE_SECURE", "false") == "true"
 	HTTP_CORS_ORIGINS           = EnvSlice("HTTP_CORS_ORIGINS", ",", []string{"http://localhost:5173"})
 	HTTP_IP_HEADERS             = EnvSlice("HTTP_IP_HEADERS", ",", []string{"X-Forwarded-By"})
 	HTTP_IP_PROXIES             = EnvSlice("HTTP_IP_PROXIES", ",", []string{"127.0.0.1/8"})
 	HTTP_KEY                    = []byte(EnvString("HTTP_KEY", "teto"))
 	HTTP_SERVER_TOKEN           = EnvString("HTTP_SERVER_TOKEN", "true") == "true"
-	HTTP_TLS_ENABLED            = EnvString("HTTP_TLS_ENABLED", "false") != "false"
+	HTTP_TLS_ENABLED            = EnvString("HTTP_TLS_ENABLED", "false") == "true"
 	HTTP_TLS_CERT               = EnvString("HTTP_TLS_CERT", "tls_crt.pem")
 	HTTP_TLS_KEY                = EnvString("HTTP_TLS_KEY", "tls_key.pem")
 	HTTP_TLS_CA                 = EnvString("HTTP_TLS_CA", "tls_ca.pem")

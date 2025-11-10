@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/bakonpancakz/template-auth/tools"
@@ -33,10 +34,10 @@ func PATCH_Users_Me(w http.ResponseWriter, r *http.Request) {
 	// Fetch Relevant Profile
 	var profile tools.DatabaseProfile
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			username, displayname, biography, subtitle, avatar_hash, 
+		`SELECT
+			username, displayname, biography, subtitle, avatar_hash,
 			banner_hash, accent_banner, accent_border, accent_background
-		FROM auth.profiles 
+		FROM auth.profiles
 		WHERE id = $1`,
 		session.UserID,
 	).Scan(
@@ -50,7 +51,7 @@ func PATCH_Users_Me(w http.ResponseWriter, r *http.Request) {
 		&profile.AccentBorder,
 		&profile.AccentBackground,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	} else if err != nil {
@@ -143,7 +144,7 @@ func PATCH_Users_Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Organize Profile
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"username":          profile.Username,
 		"displayname":       profile.Displayname,
 		"biography":         profile.Biography,

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/bakonpancakz/template-auth/tools"
@@ -8,11 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// This endpoint specifically returns a '204 No Content'
-// to protect against unwanted probing
-
-// This endpoint doesn't reset user sessions to prevent
-// any further PITA
+// This endpoint wont revoke user sessions to prevent any further PITA
 
 func PATCH_Auth_ResetPassword(w http.ResponseWriter, r *http.Request) {
 
@@ -29,17 +26,17 @@ func PATCH_Auth_ResetPassword(w http.ResponseWriter, r *http.Request) {
 	// Fetch Relevant Account
 	var user tools.DatabaseUser
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			id, email_address, password_history 
-		FROM auth.users 
+		`SELECT
+			id, email_address, password_history
+		FROM auth.users
 		WHERE token_reset = $1 AND token_reset_eat > NOW()`,
 		Body.Token,
 	).Scan(
 		&user.ID,
-		&user.PasswordHistory,
 		&user.EmailAddress,
+		&user.PasswordHistory,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	}
@@ -70,7 +67,7 @@ func PATCH_Auth_ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	// Update Account
 	tag, err := tools.Database.Exec(ctx,
-		`UPDATE auth.users SET 
+		`UPDATE auth.users SET
 			updated 		 = CURRENT_TIMESTAMP,
 			token_reset 	 = NULL,
 			token_reset_eat	 = NULL,

@@ -29,9 +29,9 @@ func DELETE_Users_Me_Connections_ID(w http.ResponseWriter, r *http.Request) {
 
 	// Revoke Relevant Connection
 	tag, err := tools.Database.Exec(ctx,
-		`UPDATE auth.connections SET 
-			updated = CURRENT_TIMESTAMP, 
-			revoked = true 
+		`UPDATE auth.connections SET
+			updated = CURRENT_TIMESTAMP,
+			revoked = TRUE
 		WHERE id = $1 AND user_id = $2`,
 		snowflake,
 		session.UserID,

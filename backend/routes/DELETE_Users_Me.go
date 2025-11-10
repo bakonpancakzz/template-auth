@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/bakonpancakz/template-auth/tools"
@@ -27,8 +28,8 @@ func DELETE_Users_Me(w http.ResponseWriter, r *http.Request) {
 	var profile tools.DatabaseProfile
 	var user tools.DatabaseUser
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
-			u.id, u.email_address, u.email_verified, p.displayname, 
+		`SELECT
+			u.id, u.email_address, u.email_verified, p.displayname,
 			p.avatar_hash, p.banner_hash
 		FROM auth.users u
 		JOIN auth.profiles p ON u.id = p.id
@@ -42,7 +43,7 @@ func DELETE_Users_Me(w http.ResponseWriter, r *http.Request) {
 		&profile.AvatarHash,
 		&profile.BannerHash,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	}
@@ -117,7 +118,7 @@ func DELETE_Users_Me(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Domain:   tools.HTTP_COOKIE_DOMAIN,
 		MaxAge:   -1,
-		Secure:   tools.PRODUCTION,
+		Secure:   tools.HTTP_COOKIE_SECURE,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})

@@ -18,9 +18,9 @@ func GET_Users_Me_Security_Sessions(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch Sessions for Account
 	rows, err := tools.Database.Query(ctx,
-		`SELECT 
+		`SELECT
 			id, device_ip_address, device_user_agent
-		FROM auth.sessions 
+		FROM auth.sessions
 		WHERE user_id = $1`,
 		session.UserID,
 	)
@@ -49,7 +49,7 @@ func GET_Users_Me_Security_Sessions(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"current":  session.SessionID,
 		"sessions": results,
 	})

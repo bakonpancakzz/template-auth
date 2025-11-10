@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -27,13 +28,13 @@ func DELETE_Users_Me_Applications_ID_Icon(w http.ResponseWriter, r *http.Request
 	// Remove Image from Application
 	var hash *string
 	err = tools.Database.QueryRow(ctx,
-		`UPDATE auth.applications SET 
-			icon_hash = NULL 
-		WHERE id = $1 AND user_id = $2 
+		`UPDATE auth.applications SET
+			icon_hash = NULL
+		WHERE id = $1 AND user_id = $2
 		RETURNING icon_hash`,
 		snowflake, session.UserID,
 	).Scan(&hash)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 		return
 	}

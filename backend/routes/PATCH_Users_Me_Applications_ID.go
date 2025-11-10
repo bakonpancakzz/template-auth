@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -39,9 +40,9 @@ func PATCH_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
 	// Fetch Relevant Application
 	var application tools.DatabaseApplication
 	err = tools.Database.QueryRow(ctx,
-		`SELECT 
+		`SELECT
 			id, created, name, description, icon_hash, redirects
-		FROM auth.applications 
+		FROM auth.applications
 		WHERE id = $1 AND user_id = $2`,
 		snowflake,
 		session.UserID,
@@ -53,7 +54,7 @@ func PATCH_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
 		&application.IconHash,
 		&application.AuthRedirects,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_APPLICATION)
 		return
 	}
@@ -135,7 +136,7 @@ func PATCH_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Organize Application
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"id":          application.ID,
 		"created":     application.Created,
 		"name":        application.Name,

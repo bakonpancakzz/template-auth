@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/bakonpancakz/template-auth/tools"
@@ -29,9 +30,9 @@ func PATCH_Users_Me_Security_Password(w http.ResponseWriter, r *http.Request) {
 	// Fetch Account Password Fields
 	var user tools.DatabaseUser
 	err := tools.Database.QueryRow(ctx,
-		`SELECT 
+		`SELECT
 			email_address, password_hash, password_history
-		FROM auth.users 
+		FROM auth.users
 		WHERE id = $1`,
 		session.UserID,
 	).Scan(
@@ -39,7 +40,7 @@ func PATCH_Users_Me_Security_Password(w http.ResponseWriter, r *http.Request) {
 		&user.PasswordHash,
 		&user.PasswordHistory,
 	)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		tools.SendClientError(w, r, tools.ERROR_UNKNOWN_USER)
 		return
 	}

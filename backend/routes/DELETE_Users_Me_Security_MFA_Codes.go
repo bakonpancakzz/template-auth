@@ -23,10 +23,10 @@ func DELETE_Users_Me_Security_MFA_Codes(w http.ResponseWriter, r *http.Request) 
 	// Generate New Recovery Codes for Current User
 	recoveryCodes := tools.GenerateRecoveryCodes()
 	tag, err := tools.Database.Exec(ctx,
-		`UPDATE auth.users SET 
+		`UPDATE auth.users SET
 			updated 		= CURRENT_TIMESTAMP,
-			mfa_codes 		= $1, 
-			mfa_codes_used 	= 0 
+			mfa_codes 		= $1,
+			mfa_codes_used 	= 0
 		WHERE id = $2 AND mfa_enabled = TRUE`,
 		recoveryCodes,
 		session.UserID,
@@ -41,7 +41,7 @@ func DELETE_Users_Me_Security_MFA_Codes(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Organize Account
-	tools.SendJSON(w, r, map[string]any{
+	tools.SendJSON(w, r, http.StatusOK, map[string]any{
 		"recovery_codes": recoveryCodes,
 	})
 }
