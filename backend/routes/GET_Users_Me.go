@@ -12,7 +12,7 @@ import (
 func GET_Users_Me(w http.ResponseWriter, r *http.Request) {
 
 	session := tools.GetSession(r)
-	if !tools.CheckScopes(session, tools.SCOPE_READ_IDENTIFY) {
+	if !tools.OAuth2ScopesContains(session, tools.SCOPE_READ_IDENTIFY) {
 		tools.SendClientError(w, r, tools.ERROR_OAUTH2_SCOPE_REQUIRED)
 		return
 	}
@@ -47,7 +47,7 @@ func GET_Users_Me(w http.ResponseWriter, r *http.Request) {
 
 	// Hide email if connection is missing optional scopes
 	var emailAddress *string = &user.EmailAddress
-	if !tools.CheckScopes(session, tools.SCOPE_READ_EMAIL) {
+	if !tools.OAuth2ScopesContains(session, tools.SCOPE_READ_EMAIL) {
 		emailAddress = nil
 	}
 

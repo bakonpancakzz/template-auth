@@ -35,7 +35,7 @@ func POST_OAuth2_Authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse Scopes
-	ok, requestedScopes := tools.FromStringToScopes(Body.ScopesString)
+	ok, requestedScopes := tools.OAuth2StringToScopes(Body.ScopesString)
 	if !ok {
 		tools.SendClientError(w, r, tools.ERROR_OAUTH2_FORM_INVALID_SCOPE)
 		return
@@ -62,14 +62,8 @@ func POST_OAuth2_Authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ensure Redirect URI is allowed
-	requestedRedirect := ""
-	for _, someURI := range application.AuthRedirects {
-		if someURI == Body.RedirectURI {
-			requestedRedirect = someURI
-			break
-		}
-	}
-	if requestedRedirect == "" {
+	ok, requestedRedirect := tools.OAauth2ScopesValidateRedirectURI(Body.RedirectURI, application.AuthRedirects)
+	if !ok {
 		tools.SendClientError(w, r, tools.ERROR_OAUTH2_FORM_INVALID_REDIRECT_URI)
 		return
 	}

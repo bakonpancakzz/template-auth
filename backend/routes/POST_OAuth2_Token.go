@@ -193,7 +193,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 			"access_token":  tokenAccess,
 			"refresh_token": tokenRefresh,
 			"expires_in":    tools.LIFETIME_OAUTH2_ACCESS_TOKEN.Seconds(),
-			"scopes":        tools.ToStringFromScopes(grant.Scopes),
+			"scopes":        tools.OAuth2ScopesToString(grant.Scopes),
 		})
 		return
 
@@ -256,7 +256,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 			"access_token":  tokenAccess,
 			"refresh_token": tokenRefresh,
 			"expires_in":    tools.LIFETIME_OAUTH2_ACCESS_TOKEN.Seconds(),
-			"scopes":        tools.ToStringFromScopes(connection.Scopes),
+			"scopes":        tools.OAuth2ScopesToString(connection.Scopes),
 		})
 		return
 

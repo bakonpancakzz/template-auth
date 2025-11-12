@@ -78,6 +78,8 @@ func PATCH_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
 		edited = true
 	}
 	if Body.Redirects != nil {
+
+		// Limit Amount of Redirect URIs
 		if len(*Body.Redirects) > tools.REDIRECT_URI_SLICE_LEN_MAX {
 			tools.SendFormError(w, r, tools.ValidationError{
 				Field:    "redirects",
@@ -86,8 +88,12 @@ func PATCH_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+
+		// Validate and Normalize the Srings
+		normalized := make([]string, 0, len(*Body.Redirects))
 		for i, uri := range *Body.Redirects {
-			if _, err := url.Parse(uri); err != nil {
+			parsed, err := url.Parse(uri)
+			if err != nil {
 				tools.SendFormError(w, r, tools.ValidationError{
 					Field: fmt.Sprintf("redirects[%d]", i),
 					Error: tools.VALIDATOR_URI_INVALID,
@@ -102,8 +108,16 @@ func PATCH_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
 				})
 				return
 			}
+			if parsed.Scheme != "https" && parsed.Scheme != "http" {
+				tools.SendFormError(w, r, tools.ValidationError{
+					Field: fmt.Sprintf("redirects[%d]", i),
+					Error: tools.VALIDATOR_URI_INVALID_SCHEME,
+				})
+				return
+			}
+			normalized = append(normalized, fmt.Sprintf("%s://%s%s", parsed.Scheme, parsed.Host, parsed.Path))
 		}
-		application.AuthRedirects = *Body.Redirects
+		application.AuthRedirects = normalized
 		edited = true
 	}
 
