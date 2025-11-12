@@ -26,8 +26,9 @@ func POST_Users_Me_Applications(w http.ResponseWriter, r *http.Request) {
 
 	// Create New Application for Account
 	var applicationID = tools.GenerateSnowflake()
-	var applicationSecret = tools.GenerateSignedString()
 	var applicationCreated = time.Now()
+	var applicationSecret, _ = tools.GenerateApplicationSecret()
+
 	_, err := tools.Database.Exec(ctx,
 		`INSERT INTO auth.applications (
 			id, created, updated, user_id, name, auth_secret

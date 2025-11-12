@@ -28,13 +28,13 @@ func DELETE_Users_Me_Applications_ID_Reset(w http.ResponseWriter, r *http.Reques
 	defer cancel()
 
 	// Generate New Secret Key for Application
-	newSecret := tools.GenerateSignedString()
+	secretPlain, secretHashed := tools.GenerateApplicationSecret()
 	tag, err := tools.Database.Exec(ctx,
 		`UPDATE auth.applications SET
-			updated 	= CURRENT_TIMESTAMP,
-			secret_key 	= $1
+			updated = CURRENT_TIMESTAMP,
+			auth_secret = $1
 		WHERE id = $2 AND user_id = $3`,
-		newSecret,
+		secretHashed,
 		snowflake,
 		session.UserID,
 	)
@@ -49,6 +49,6 @@ func DELETE_Users_Me_Applications_ID_Reset(w http.ResponseWriter, r *http.Reques
 
 	// Organize Application
 	tools.SendJSON(w, r, http.StatusOK, map[string]any{
-		"secret_key": newSecret,
+		"secret": secretPlain,
 	})
 }

@@ -113,3 +113,16 @@ func CompareStringConstant(a, b string) bool {
 func GenerateImageHash(image []byte) string {
 	return fmt.Sprintf("%x", md5.Sum(image))
 }
+
+// Generate Plaintext and Hashed Versions of a Application Secret
+func GenerateApplicationSecret() (plain string, hashed string) {
+	plain = GenerateSignedString()
+	hashed = fmt.Sprintf("%X", sha256.Sum256([]byte(plain)))
+	return plain, hashed
+}
+
+// Validate Plaintext Application Secret against Hash
+func CompareApplicationSecret(given, stored string) bool {
+	hashed := fmt.Sprintf("%X", sha256.Sum256([]byte(given)))
+	return CompareStringConstant(stored, hashed)
+}

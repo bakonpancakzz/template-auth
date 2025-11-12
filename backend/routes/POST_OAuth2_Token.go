@@ -81,7 +81,7 @@ func POST_OAuth2_Token(w http.ResponseWriter, r *http.Request) {
 		tools.SendServerError(w, r, err)
 		return
 	}
-	if !tools.CompareStringConstant(clientSecret, application.AuthSecret) {
+	if !tools.CompareApplicationSecret(clientSecret, application.AuthSecret) {
 		tools.SendClientError(w, r, tools.ERROR_GENERIC_UNAUTHORIZED)
 		return
 	}

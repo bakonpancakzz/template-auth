@@ -129,10 +129,10 @@ func PATCH_Users_Me_Applications_ID(w http.ResponseWriter, r *http.Request) {
 	// Apply Application Edits
 	tag, err := tools.Database.Exec(ctx,
 		`UPDATE auth.applications SET
-			updated 	= CURRENT_TIMESTAMP,
-			name		= $1,
-			description = $2,
-			redirects   = $3
+			updated 	   = CURRENT_TIMESTAMP,
+			name		   = $1,
+			description    = $2,
+			auth_redirects = $3
 		WHERE id = $4 and user_id = $5`,
 		application.Name,
 		application.Description,

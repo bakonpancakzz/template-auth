@@ -37,7 +37,7 @@ func POST_OAuth2_Token_Revoke(w http.ResponseWriter, r *http.Request) {
 	// Validate Application Secret
 	var application tools.DatabaseApplication
 	err := tools.Database.QueryRow(ctx,
-		"SELECT id, secret_key FROM auth.applications WHERE id = $1",
+		"SELECT id, auth_secret FROM auth.applications WHERE id = $1",
 		clientID,
 	).Scan(
 		&application.ID,
@@ -52,7 +52,8 @@ func POST_OAuth2_Token_Revoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tools.CompareStringConstant(clientSecret, application.AuthSecret) {
+	// Compare Application Secret
+	if !tools.CompareApplicationSecret(clientSecret, application.AuthSecret) {
 		tools.SendClientError(w, r, tools.ERROR_GENERIC_UNAUTHORIZED)
 		return
 	}
