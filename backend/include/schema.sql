@@ -47,7 +47,6 @@ BEGIN
             id                  BIGINT          NOT NULL PRIMARY KEY,                       -- Account ID
             created             TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,         -- Created At
             updated             TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,         -- Updated At
-            permissions         INT             NOT NULL DEFAULT 0,                         -- User Permissions
             email_address       TEXT            NOT NULL UNIQUE,                            -- User Email Address
             email_verified      BOOLEAN         NOT NULL DEFAULT FALSE,                     -- Email Verified?
             ip_address          TEXT            NOT NULL DEFAULT '',                        -- New Login IP Address

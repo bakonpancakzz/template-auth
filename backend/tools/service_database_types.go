@@ -6,7 +6,6 @@ type DatabaseUser struct {
 	ID                int64
 	Created           time.Time
 	Updated           time.Time
-	Permissions       int
 	EmailAddress      string
 	EmailVerified     bool
 	IPAddress         string
